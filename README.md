@@ -130,7 +130,7 @@ Em seguida, acesse o teste em localhost:3000
 
 ## Rodando os testes
 
-*TODO* Os teste unitários ainda não foram desenvolvidos... Infelizmente não começamos o projeto usando TDD, mas provavelmente acresentaremos eles durante os próximos dias. (Se você está vendo esse README anos depois dele ter sido escrito e ainda não existem testes... Sinto muito)
+**TODO** Os teste unitários ainda não foram desenvolvidos... Infelizmente não começamos o projeto usando TDD, mas provavelmente acresentaremos eles durante os próximos dias. (Se você está vendo esse README anos depois dele ter sido escrito e ainda não existem testes... Sinto muito)
 
 ### Quebre em teste de ponta a ponta
 
@@ -159,12 +159,13 @@ Usamos [SemVer](http://semver.org/) para versionamento. Para versões disponíve
 
 ## Autores
 
-* **Mateus Berardo** - *Tradução para português* - [MatTerra](https://github.com/MatTerra)
+* **Mateus Berardo** - *Trabalho Inicial* - [MatTerra](https://github.com/MatTerra)
+
 Veja também a lista de [contribuidores](contributors) que participaram nesse projeto.
 
 ## Licença
 
-Esse projeto está licenciado sob uma licença do MIT - veja o arquivo [LICENSE.md](LICENSE.md) para detalhes
+Esse projeto está licenciado sob uma licença GNU v3 - veja o arquivo [LICENSE](LICENSE) para detalhes
 
 ## Agradecimentos
 
