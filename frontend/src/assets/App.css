@@ -1,0 +1,175 @@
+html, body {
+  height: 100%;
+  width: 100%;
+  background-color: #282c34;
+}
+
+input:focus, button:focus{
+  outline: none;
+}
+
+div{
+  display: flex;
+  flex-direction: column;
+  justify-content: start;
+}
+
+button{
+  border-radius: 5rem;
+  padding: 0.5rem;
+  border: 0;
+}
+
+p{
+  font-weight: bold;
+}
+
+.cadastro{
+  color: #61dafb;
+  background-color: #00000000;
+}
+
+.cadastro:hover{
+  color: #38e4ff;
+  font-weight: bold;
+}
+
+.newGame{
+  background-color: #20202099;
+  padding-top: 5vh;
+  align-items: center;
+}
+
+.login{
+  background-color: #00000099;
+  padding-top: 5vh;
+  align-items: center;
+}
+
+.buttonContainer{
+  flex-direction: row;
+  align-items: center;
+  max-width: 30vw;
+  justify-content: center;
+}
+
+.entrada{
+  color: white;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 30vw;
+  align-self: center;
+  margin-top: 10px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.buttonDetail{
+  background-color: #454545bb;
+  color: white;
+  margin-left: 1vw;
+}
+
+.buttonDetail:hover{
+  background-color: #222222dd;
+}
+
+.confirmCreate:hover{
+  transition: 0.2s 0s;
+  background-color: #5cb50d66;
+}
+
+.buttonDetail:active{
+  background-color: #5cb50dbb; 
+}
+
+.detalhesJogo {
+  background-color: #00000000;
+  border-radius: 5px;
+  border-top: 0px;
+  border-left: 0px;
+  border-right: 0px;
+  margin-left: 1vw;
+  border-color: #5cb50d;
+  color: white;
+  width: 3rem;
+  text-align: center;
+  font-weight: bold;
+  font-size: large;
+}
+
+
+.cure{
+  width: 4vw;
+  height: 4vw;
+  max-width: 100px;
+  max-height: 100px;
+  position: absolute;
+  margin-left: 1vw;
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  background-position-x: center;
+  background-position-y: center;
+}
+
+.cured{
+  size: 100% 100%;
+  width: 4vw;
+  height: 4vw;
+  max-width: 100px;
+  max-height: 100px;
+  margin: auto;
+}
+
+#root{
+  height: 100%;
+  width: 100%;
+  display: flex;
+  background: url(./map5.png);
+  background-repeat: no-repeat;
+  background-size: 100vw auto;
+  background-position-x: center;
+  background-position-y: bottom;
+}
+
+.map {
+  height: 95%;
+  width: 95%;
+  margin: auto;
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
+}
+
+.App-header {
+  background-color: #282c34;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: calc(10px + 2vmin);
+  color: white;
+}
+
+.App-link {
+  color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}

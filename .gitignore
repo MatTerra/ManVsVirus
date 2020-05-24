@@ -1,0 +1,5 @@
+frontend/build/
+users-api/
+.idea/
+venv/
+commands

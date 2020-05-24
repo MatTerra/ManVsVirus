@@ -1,0 +1,6 @@
+flask
+flask-cors
+connexion[swagger-ui]
+uwsgi
+mysql-connector
+python-jose
