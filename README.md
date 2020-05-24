@@ -95,7 +95,7 @@ Com o virtualenv instalado vamos criar o ambiente virtual com o comando abaixo. 
 $ virtualenv -p /home/user/.pyenv/versions/3.8.2/bin/python venv
 ```
 
-Depois que o ambiente estiver criado, ative-o com o comando abaixo
+Depois que o ambiente estiver criado, ative-o com o comando abaixo. (Para desativar utilize `deactivate`)
 
 ```
 $ source venv/bin/activate
@@ -112,27 +112,33 @@ Para instalar as bibliotecas necessárias, acesse a pasta raiz do projeto e exec
 $ pip install -r requirements.txt
 ```
 
-Termine com um exemplo de um teste rápido do sistema
+Agora continuaremos para a configuração do React.
+
+Utilizaremos o yarn como gerenciador de pacotes. Para instalar as dependências, rode o comando abaixo após instalar o yarn.
+
+```
+$ yarn install
+```
+
+Em seguida, inicie o servidor de teste com o comando abaixo:
+
+```
+$ yarn start
+```
+
+Em seguida, acesse o teste em localhost:3000
 
 ## Rodando os testes
 
-Explique como rodar os testes automatizados para este sistema
+*TODO* Os teste unitários ainda não foram desenvolvidos... Infelizmente não começamos o projeto usando TDD, mas provavelmente acresentaremos eles durante os próximos dias. (Se você está vendo esse README anos depois dele ter sido escrito e ainda não existem testes... Sinto muito)
 
 ### Quebre em teste de ponta a ponta
 
-Explique o que é testado e porque
-
-```
-Dê um exemplo
-```
+Ainda não temos...
 
 ### E testes de estilo de código
 
-Explique o que é testado e porque
-
-```
-Dê um exemplo
-```
+Existirão!
 
 ## Deploy
 
@@ -140,23 +146,21 @@ Adicione notas para deploy para produção
 
 ## Ferramentas de build
 
-* [Dropwizard](http://www.dropwizard.io/1.0.2/docs/) - The web framework used
-* [Maven](https://maven.apache.org/) - Dependency Management
-* [ROME](https://rometools.github.io/rome/) - Used to generate RSS Feeds
+* [yarn](https://yarnpkg.com/) - Gerenciador de pacotes do React
+* Não temos ferramentas de build para o python.
 
 ## Contribuindo
 
-Por favor leia [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) para detalhes do nosso código de conduta e do processo de submissão de PR's para nós.
+Por favor leia [CONTRIBUTING.md](CONTRIBUTING.md) para detalhes do nosso código de conduta e do processo de submissão de PR's para nós.
 
 ## Versionamento
 
-Usamos [SemVer](http://semver.org/) para versionamento. Para versões disponíveis, veja as [tags nesse repositório](https://github.com/your/project/tags). 
+Usamos [SemVer](http://semver.org/) para versionamento. Para versões disponíveis, veja as [tags nesse repositório](tags). 
 
 ## Autores
 
-* **Billie Thompson** - *Trabalho Inicial* - [PurpleBooth](https://github.com/PurpleBooth)
 * **Mateus Berardo** - *Tradução para português* - [MatTerra](https://github.com/MatTerra)
-Veja também a lista de [contribuidores](https://github.com/your/project/contributors) que participaram nesse projeto.
+Veja também a lista de [contribuidores](contributors) que participaram nesse projeto.
 
 ## Licença
 
@@ -164,7 +168,5 @@ Esse projeto está licenciado sob uma licença do MIT - veja o arquivo [LICENSE.
 
 ## Agradecimentos
 
-* Menção a todos que contribuíram para o repo
-* Inspirações
-* etc
+* **Billie Thompson** - *Trabalho Inicial do Modelo de README* - [PurpleBooth](https://github.com/PurpleBooth)
 
