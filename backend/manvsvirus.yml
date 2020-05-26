@@ -1,0 +1,77 @@
+swagger: "2.0"
+info:
+  description: API de backend do jogo man vs virus
+  version: "1.0.0"
+  title: Man Vs Virus backend
+consumes:
+  - "application/json"
+produces:
+  - "application/json"
+
+basePath: "/v1"
+
+# Paths supported by the server application
+paths:
+  /game:
+    post:
+      operationId: main.create_game
+      security:
+        - jwt: ['secret']
+      summary: "Criação de novo jogo"
+      description: "Endpoint de criação de novo jogo"
+      parameters:
+        - name: "game_data"
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              num_players:
+                type: integer
+                x-nullable: false
+              difficulty:
+                type: integer
+                x-nullable: false
+              password:
+                type: string
+                x-nullable: false
+      responses:
+        200:
+          description: "Jogo Criado"
+        500:
+          description: "Ocorreu um erro"
+
+  /game/{game_id}:
+    post:
+      operationId: main.join_game
+      security:
+        - jwt: ['secret']
+      summary: "Juntar-se a um jogo"
+      description: "Endpoint de entrar em um novo jogo"
+      parameters:
+        - name: "game_id"
+          in: path
+          type: string
+          required: true
+        - name: "data"
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              password:
+                type: string
+                x-nullable: false
+      responses:
+        200:
+          description: "Jogador entrou no jogo"
+        500:
+          description: "Ocorreu um erro"
+
+securityDefinitions:
+  jwt:
+    type: apiKey
+    name: Authorization
+    in: header
+    x-authentication-scheme: Bearer
+    x-bearerInfoFunc: auth.decode_token

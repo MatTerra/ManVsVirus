@@ -29,9 +29,10 @@ class Board:
             city.unlock_infection()
 
     def serialize(self):
-        return {'cities': {city.id: city.serialize() for city in self.locations},
-                'research_centers': {city.id: city.name for city in self.research_centers},
-                'infection_speed': self.infection_speeds[self.current_speed]}
+        return {'cities': {str(city.id): city.serialize() for city in self.locations}}#,
+        #         u'research_centers': {str(city.id).encode('utf-8'): city.name.encode('utf-8') for city in self.research_centers},
+        #         u'infection_speed': str(self.infection_speeds[self.current_speed]).encode('utf-8')}
+        return dict()
 
 if __name__ == '__main__':
     board = Board()

@@ -6,7 +6,15 @@ from backend.infection_deck import InfectionDeck
 from backend.player_deck import PlayerDeck
 from backend.constants import COLORS
 from backend.city import CITIES
-from random import shuffle
+from random import shuffle, choice
+import string
+import hashlib
+
+from flask import abort
+
+import firebase_admin
+from firebase_admin import credentials
+from firebase_admin import firestore
 
 
 class Controller:
@@ -127,11 +135,87 @@ class Controller:
         player.move(CITIES[action.get('data').get('destination')])
 
     def serialize(self):
-        return {'board': self.board.serialize(),
-                'players': [player.serialize() for player in self.players],
-                'outbreaks': self.outbreaks,
-                'cures': {COLORS[i]: self.cures[i] for i in range(4)},
-                'turn': {'player': self.turn_of, 'remaining_actions': self.remaining_actions}}
+        serial = self.board.serialize()
+        serial.update({
+            'players': {str(player.id): player.serialize() for player in self.players},
+            'outbreaks': self.outbreaks,
+            'cures': {COLORS[i]: self.cures[i] for i in range(4)},
+            'turn': {'player': self.turn_of, 'remaining_actions': self.remaining_actions}})
+        return serial
+
+
+def create_game(game_data: dict, token_info: dict):
+    try:
+        user_id = token_info.get('primarysid')
+        num_players = game_data['num_players']
+        difficulty = game_data['difficulty']
+        password = game_data['password'].encode('utf-8')
+    except:
+        return abort(404, "Missing parameters")
+    game = Controller(num_players, difficulty)
+    # Use a service account
+    cred = credentials.Certificate('../manvsvirus-2944b63208f8.json')
+    app = firebase_admin.initialize_app(cred, {'app': 'manvsvirus'})
+
+    db = firestore.client()
+    doc_ref_2 = db.collection('users_games').document(user_id).get()
+    if doc_ref_2.exists:
+        firebase_admin.delete_app(app)
+        abort(400, "User already in a game")
+
+    lettersAndDigits = string.ascii_letters + string.digits
+    game_id = ''.join((choice(lettersAndDigits) for i in range(32)))
+
+    doc_ref = db.collection('games').document(game_id)
+    game_serialized = game.serialize()
+    users = {str(i): None for i in range(1, num_players)}
+    users['0'] = user_id
+    game_serialized.update({'users': users,
+                            'password': str(hashlib.sha256(password).hexdigest())})
+    doc_ref.set(game_serialized)
+
+    doc_ref_2 = db.collection('users_games').document(user_id)
+    doc_ref_2.set({'active': True})
+
+    firebase_admin.delete_app(app)
+    return game_id
+
+
+def join_game(game_id: str, data: dict, token_info: dict):
+    try:
+        user_id = token_info.get('primarysid')
+        password = data['password'].encode('utf-8')
+    except:
+        return abort(404, "Missing parameters")
+    cred = credentials.Certificate('../manvsvirus-2944b63208f8.json')
+    app = firebase_admin.initialize_app(cred, {'app': 'manvsvirus'})
+
+    db = firestore.client()
+    doc_ref_2 = db.collection('users_games').document(user_id).get()
+    if doc_ref_2.exists:
+        firebase_admin.delete_app(app)
+        abort(400, "User already in a game")
+
+    doc_ref = db.collection('games').document(game_id).get()
+    if not doc_ref.exists:
+        firebase_admin.delete_app(app)
+        abort(404, "Game doesn't exists")
+    game_dict = doc_ref.to_dict()
+    if game_dict.get('password') != str(hashlib.sha256(password).hexdigest()):
+        firebase_admin.delete_app(app)
+        abort(401, "Wrong Password")
+
+    users = game_dict.get('users')
+
+    for key in users.keys():
+        if users[key] is None:
+            doc_ref = db.collection('games').document(game_id)
+            users[key]=user_id
+            doc_ref.update({'users': users})
+            break
+
+    doc_ref_2 = db.collection('users_games').document(user_id)
+    doc_ref_2.set({'active': True})
 
 
 if __name__ == '__main__':
@@ -144,6 +228,8 @@ if __name__ == '__main__':
         difficulty = int(input("How difficult will the game be(1-3)?"))
 
     game = Controller(num_players, difficulty)
+    print(game.serialize())
+
     game.board.infect(0, 2)
     game.cures[0] = True
     print(json.dumps(game.serialize()))
