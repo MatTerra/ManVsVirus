@@ -3,6 +3,7 @@ import './assets/App.css';
 import Login from './pages/Login';
 import Cadastro from './pages/Cadastro';
 import NewGame from './pages/NewGame';
+import Game from './pages/Game';
 import Auth from './contexts/AuthContext';
 import ProtectedRoute from './utils/ProtectedRoute'
 import {BrowserRouter as Router, Switch, Route} from  'react-router-dom';
@@ -15,6 +16,8 @@ const App = () => {
           <Switch>
             <Route path="/entrar" exact component={Login} />
             <Route path="/cadastrar" exact component={Cadastro} />
+            <Route path="/jogo" exact component={Game} />
+            
             <ProtectedRoute
               path="/"
               exact

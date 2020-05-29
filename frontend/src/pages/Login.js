@@ -76,7 +76,10 @@ const Login = ({history, locations
                 </div>
             </form>
             <div class='entrada'>
-                <button class='cadastro' style={{marginTop:"5vh", marginBottom:"1vh"}} onClick={() => {history.push({ pathname:"/cadastrar" }); window.location.reload();}}>Criar nova conta</button>
+                <button class='cadastro' style={{marginTop:"5vh", marginBottom:"1vh"}} onClick={() => {history.push({ pathname:"/cadastrar" });}}>Criar nova conta</button>
+            </div>
+            <div class='entrada'>
+                <button class='cadastro' style={{marginTop:"5vh", marginBottom:"1vh"}} onClick={() => {history.push({ pathname:"/jogo" });}}>Criar nova conta</button>
             </div>
         </div>
         
