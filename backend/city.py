@@ -52,9 +52,7 @@ class City:
                 'name': self.name,
                 'country': self.country,
                 'color': self.color,
-                'connections': {str(city.id): city.name for city in self.connections},
-                'research_center': self.research_center,
-                'infections': {COLORS[i]: self.infections[i] for i in range(4)}}
+                'connections': {str(city.id): city.name for city in self.connections},}
 
 
 CITIES = list()

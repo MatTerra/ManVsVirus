@@ -28,6 +28,7 @@ class InfectionDeck(Deck):
         self.deck.reverse()
         return card
 
+
 if __name__ == '__main__':
     deck = InfectionDeck()
     deck.shuffle()

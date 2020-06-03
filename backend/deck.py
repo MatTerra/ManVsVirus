@@ -19,3 +19,7 @@ class Deck:
             return drawn_card
         except IndexError:
             return None
+
+    def serialize(self):
+        return {'drawn': [card.serialize() for card in self.drawn],
+                'deck': [card.serialize() for card in self.deck]}

@@ -1,18 +1,47 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import '../assets/App.css'
 import Button from '../components/Button'
+import {Redirect} from 'react-router-dom'
+import isOnGame from '../utils/isOnGame'
+import {backend} from '../utils/api'
 
-const NewGame = () => {
+const NewGame = ({history}) => {
     const [nPlayers, setNPlayers] = useState(2)
     const [dificuldade, setDificuldade] = useState(0)
     const [senha, setSenha] = useState('')
+    const [game, setGame] = useState(false)
+    const [join, setJoin] = useState(false)
+
+    useEffect(() => { 
+        async function changePage(){
+            let data = await isOnGame()
+            setGame(data)
+        }
+        changePage()
+    },[])
+
+    async function handleSubmit(e){
+        e.preventDefault();
+        backend.post('/game', {'num_players':nPlayers, 'difficulty':dificuldade, 'password':senha}, { headers: { Authorization: `Bearer ${localStorage.getItem('loginToken')}`}}).then(() => {
+            setGame(true)
+        })
+        
+    }
+        
 
     return(
         <>
+        {game && <Redirect to={{
+                    pathname: "/jogo"
+                  }}/>}
+        {join && <Redirect to={{
+                    pathname: "/participar"
+                  }}/>}
         <h1 style={{color: "white", marginBottom:"20vh", alignSelf: "center", fontSize:"6rem"}}>Man VS Virus</h1>
         <div class='newGame'>
             <div class='entrada' style={{justifyContent: 'space-between', minWidth:"20vw"}}>
-                <p style={{width: "50%"}}>Senha do Jogo: </p> <input class='detalhesJogo' style={{width: '10rem'}} onChange={e => {setSenha(e.target.value)}}/>
+                <p style={{width: "50%"}}>Senha do Jogo: </p> 
+                <input class='detalhesJogo' style={{width: '10rem'}} onChange={e => {setSenha(e.target.value)}}/>
             </div>
             <div class='entrada' style={{justifyContent: 'space-between', minWidth:"20vw"}}> 
                 <p>Número de Jogadores: </p>
@@ -30,7 +59,10 @@ const NewGame = () => {
                 <Button assignedClass="buttonDetail" onClick={() => {setDificuldade(3)}} color={dificuldade==3?"#5cb50d99":"#20202099"} text="Heróico"/>
             </div>
             <div class='entrada'>
-                <button class='buttonDetail confirmCreate' style={{marginTop:"5vh", marginBottom:'2vh'}}>Criar novo jogo</button>
+                <button class='buttonDetail confirmCreate' style={{marginTop:"5vh", marginBottom:'2vh'}} onClick={e => handleSubmit(e)}>Criar novo jogo</button>
+            </div>
+            <div class='entrada'>
+                <button class='cadastro' style={{marginTop:"5vh", marginBottom:'2vh'}} onClick={() => setJoin(true)}>Entrar em um jogo</button>
             </div>
         </div>
         </>

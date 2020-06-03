@@ -1,16 +1,27 @@
-from backend.city import CITIES, City
+from backend.city import City
+from backend.constants import CITIES_DATA
 
 
 class Board:
-    def __init__(self):
-        self.locations = CITIES
+    def __init__(self, cities: list = CITIES_DATA):
+        self.locations = list()
+        for i in range(48):
+            city = City(i, cities[i][0], cities[i][1], cities[i][2], cities[i][3])
+            self.locations.append(city)
+
+        for i in range(48):
+            for connection in cities[i][4]:
+                self.locations[i].add_connection(self.locations[connection])
+
         self.research_centers = list()
         self.current_speed = 0
         self.infection_speeds = (2,2,2,3,3,4,4)
-        self.add_research_center(CITIES[0])
+        self.add_research_center(self.locations[0])
+
 
     def infect(self, location: int, amount: int = 1):
         outbreaks = self.locations[location].infect(amount)
+
         return outbreaks
 
     def add_research_center(self, city: City):
@@ -29,10 +40,11 @@ class Board:
             city.unlock_infection()
 
     def serialize(self):
-        return {'cities': {str(city.id): city.serialize() for city in self.locations}}#,
-        #         u'research_centers': {str(city.id).encode('utf-8'): city.name.encode('utf-8') for city in self.research_centers},
-        #         u'infection_speed': str(self.infection_speeds[self.current_speed]).encode('utf-8')}
-        return dict()
+        return {'cities': {str(city.id): city.serialize() for city in self.locations},
+                'research_centers': [city.id for city in self.research_centers],
+                'infection_speed': self.infection_speeds[self.current_speed],
+                'infections': {str(location.id): location.infections for location in self.locations}}
+        # return dict()
 
 if __name__ == '__main__':
     board = Board()
@@ -43,10 +55,10 @@ if __name__ == '__main__':
         print(cidade.serialize())
         print(board.outbreaks)
 
-    print(CITIES[0].serialize())
+    print(board.locations[0].serialize())
     for i in range(6):
-        board.add_research_center(CITIES[i+1])
+        board.add_research_center(board.locations[i+1])
         print(board.research_centers)
 
-    print(CITIES[0].serialize())
+    print(board.locations[0].serialize())
     print(board.serialize())

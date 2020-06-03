@@ -13,6 +13,18 @@ basePath: "/v1"
 # Paths supported by the server application
 paths:
   /game:
+    get:
+      operationId: main.read_game
+      security:
+        - jwt: ['secret']
+      summary: "Recuperar jogo"
+      description: "Endpoint para recuperar o jogo em que o jogador está participando"
+      responses:
+        200:
+          description: "Jogo"
+        404:
+          description: "Jogo não encontrado"
+
     post:
       operationId: main.create_game
       security:

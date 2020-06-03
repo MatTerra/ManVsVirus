@@ -1,7 +1,13 @@
+from firebase_admin import initialize_app
+from firebase_admin.credentials import Certificate
+
 AZUL = 0
 PRETO = 1
 AMARELO = 2
 VERMELHO = 3
+
+CREDENTIALS = Certificate('../manvsvirus-2944b63208f8.json')
+FIREBASE = initialize_app(CREDENTIALS, {'app': 'manvsvirus'})
 
 COLORS=['Azul', 'Preto', 'Amarelo', 'Vermelho']
 

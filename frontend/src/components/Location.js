@@ -1,24 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Infection from './Infection';
+import Player from './Player';
 
-const Location = ({ color, name, x, y, infections}) => {
+const Location = ({ color, name, researchCenter, x, y, infections, players}) => {
 
     const colors=['blue', 'black', 'yellow', 'red']
+    const indexes=[0,1,2,3].filter((_)=>_!=color)
+    const [playersComponents, setPlayersComponents] = useState(<></>)
+
+    useEffect(()=>{
+        
+        setPlayersComponents(players.map((player, i) => <Player role={player.role} 
+                                                      x={(players.length%2==0)?(i%2==0?(players.length>1?-1:0):1):(i==0?0:(i%2==0?1:-1))} 
+                                                      y={(players.length%2==0)?(i<2?(players.length>2?-1:0):1):(players.length>1?(i<1?-1:1):0)}/>))
+    },[players, researchCenter, infections])
 
     return (
         <div class='radialGrad' style={{ position: 'absolute', top: y, left: x, display:'flex', alignItems:"center"}}>
             <div style={{position:'absolute', height:'2vw', width:'2vw'}}>
-                <img src={process.env.PUBLIC_URL+'/location_'+colors[color]+'.png'} style={{height: '100%', width:'100%', position:'relative'}}/>
-                {/* { arr = Array(4).fill(0).map( (_, rowIndex) => { Array(infections[rowIndex]).fill(0) } );
-                arr.map((row, rowIndex) => {
-                    row.map((_, columnIndex)=>{
-                        <Infection color={colors[rowIndex]} x={columnIndex} y={rowIndex}/>
-                    })
-                })} */}
-                {Array(infections[0]).fill('blue').map((_, i) => <Infection color='blue' x={i} y={color=='blue'?0:1}/>)}
-                {Array(infections[1]).fill(<Infection color='black' y={color=='black'?0:1}/>)}
-                {Array(infections[2]).fill(<Infection color='yellow' y={color=='yellow'?0:1}/>)}
-                {Array(infections[3]).fill(<Infection color='red' y={color=='red'?0:1}/>)}
+                {researchCenter || <img src={process.env.PUBLIC_URL+'/location_'+colors[color]+'.png'} alt="infection"style={{height: '100%', width:'100%', position:'relative'}}/>}
+                {researchCenter && <img src={process.env.PUBLIC_URL+'/research_center.png'} style={{height:'120%', width:'120%', position:'relative', bottom:'30%'}}/>}
+                {Array(infections[color]).fill(color).concat(Array(infections[indexes[0]]).fill(indexes[0]),
+                                                          Array(infections[indexes[1]]).fill(indexes[1]),
+                                                          Array(infections[indexes[2]]).fill(indexes[2])
+                                                          ).map( 
+                   (colorCode, i) => <Infection id={colorCode} color={colors[colorCode]} x={colorCode==color?i:i-infections[color]} y={(colorCode==color)?0:infections[color]==0?0:1}/> 
+                )}
+                {playersComponents}
             </div>
             <label style={{fontWeight: 'bold', position:'relative', top:'2vw'}}>{name}</label>
         </div>
