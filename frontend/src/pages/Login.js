@@ -2,8 +2,7 @@ import React, { useState } from 'react'
 import { usersApi } from '../utils/api'
 import { store } from "react-notifications-component";
 
-const Login = ({history, locations
-}) => {
+const Login = ({history, locations}) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -21,7 +20,6 @@ const Login = ({history, locations
             history.push({
                 pathname:"/"
             });
-            window.location.reload();
         } catch (err){
             let errors = [];
             let erro;

@@ -50,8 +50,8 @@ class Player:
     def serialize(self) -> dict:
         return {'id': self.id,
                 'role': Player.ROLES.get(self.role),
-                'location': {str(self.location.id): self.location.name},
-                'possible_moves': {str(city.id): city.name for city in self.possible_moves()},
+                'location': self.location.id,
+                'possible_moves': {city.name: city.id for city in self.possible_moves()},
                 'cards': {str(card.id): ({'type': 'city', 'name': card.city.name, 'color': COLORS[card.city.color], 'population': card.city.population}
                                     if card.city is not None
                                     else {'type': 'action', 'name': card.action}

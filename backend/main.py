@@ -4,7 +4,7 @@ from backend.player import Player
 from backend.board import Board
 from backend.infection_deck import InfectionDeck
 from backend.player_deck import PlayerDeck
-from backend.constants import COLORS
+from backend.constants import COLORS, FIREBASE
 from backend.city import CITIES
 from random import shuffle, choice
 import string
@@ -12,8 +12,6 @@ import hashlib
 
 from flask import abort
 
-import firebase_admin
-from firebase_admin import credentials
 from firebase_admin import firestore
 
 
@@ -33,6 +31,10 @@ class Controller:
                 card = self.infection_deck.draw_card()
                 self.board.locations[card.city.id].infect(amount=(3 - i))
                 print(str(self.board.locations[card.city.id].infections))
+
+        infections = [location.infections for location in self.board.locations]
+        infections_zip = list(zip(*infections))
+        self.infection_sum = list(map(sum, infections_zip))
 
         self.player_deck = PlayerDeck(difficulty + 2)
         self.player_deck.shuffle()
@@ -80,6 +82,13 @@ class Controller:
 
         self.infection_stage()
         if self.outbreaks > 7:
+            self.lost = True
+            self.turn_of = None
+
+        infections = [location.infections for location in self.locations]
+        infections_zip = list(zip(*infections))
+        self.infection_sum = list(map(sum, infections_zip))
+        if max(self.infection_sum > 24):
             self.lost = True
             self.turn_of = None
 
@@ -140,8 +149,35 @@ class Controller:
             'players': {str(player.id): player.serialize() for player in self.players},
             'outbreaks': self.outbreaks,
             'cures': {COLORS[i]: self.cures[i] for i in range(4)},
-            'turn': {'player': self.turn_of, 'remaining_actions': self.remaining_actions}})
+            'turn': {'player': self.turn_of, 'remaining_actions': self.remaining_actions},
+            'infections_sum': self.infection_sum,
+            'infection_deck': self.infection_deck.serialize(),
+            'player_deck': self.player_deck.serialize()})
         return serial
+
+
+def read_game(token_info: dict):
+    try:
+        user_id = token_info.get('primarysid')
+    except:
+        return abort(404, "Missing parameters")
+
+    db = firestore.client()
+    doc_ref_2 = db.collection('users_games').document(user_id).get()
+    if not doc_ref_2.exists:
+        abort(400, "User not in a game")
+    game_id = doc_ref_2.to_dict().get('game')
+    if game_id is None:
+        abort(400, "User not in a game")
+
+    doc_ref = db.collection('games').document(game_id).get()
+    if not doc_ref.exists:
+        abort(404, "Game doesn't exists")
+    game_dict = doc_ref.to_dict()
+    game_dict.pop('password')
+    game_dict.pop('infection_deck')
+    game_dict.pop('player_deck')
+    return game_dict
 
 
 def create_game(game_data: dict, token_info: dict):
@@ -152,15 +188,13 @@ def create_game(game_data: dict, token_info: dict):
         password = game_data['password'].encode('utf-8')
     except:
         return abort(404, "Missing parameters")
+
     game = Controller(num_players, difficulty)
     # Use a service account
-    cred = credentials.Certificate('../manvsvirus-2944b63208f8.json')
-    app = firebase_admin.initialize_app(cred, {'app': 'manvsvirus'})
 
     db = firestore.client()
     doc_ref_2 = db.collection('users_games').document(user_id).get()
     if doc_ref_2.exists:
-        firebase_admin.delete_app(app)
         abort(400, "User already in a game")
 
     lettersAndDigits = string.ascii_letters + string.digits
@@ -175,10 +209,10 @@ def create_game(game_data: dict, token_info: dict):
     doc_ref.set(game_serialized)
 
     doc_ref_2 = db.collection('users_games').document(user_id)
-    doc_ref_2.set({'active': True})
+    doc_ref_2.set({'game': game_id})
 
-    firebase_admin.delete_app(app)
     return game_id
+
 
 
 def join_game(game_id: str, data: dict, token_info: dict):
@@ -187,22 +221,17 @@ def join_game(game_id: str, data: dict, token_info: dict):
         password = data['password'].encode('utf-8')
     except:
         return abort(404, "Missing parameters")
-    cred = credentials.Certificate('../manvsvirus-2944b63208f8.json')
-    app = firebase_admin.initialize_app(cred, {'app': 'manvsvirus'})
 
     db = firestore.client()
     doc_ref_2 = db.collection('users_games').document(user_id).get()
     if doc_ref_2.exists:
-        firebase_admin.delete_app(app)
         abort(400, "User already in a game")
 
     doc_ref = db.collection('games').document(game_id).get()
     if not doc_ref.exists:
-        firebase_admin.delete_app(app)
         abort(404, "Game doesn't exists")
     game_dict = doc_ref.to_dict()
     if game_dict.get('password') != str(hashlib.sha256(password).hexdigest()):
-        firebase_admin.delete_app(app)
         abort(401, "Wrong Password")
 
     users = game_dict.get('users')
@@ -210,12 +239,12 @@ def join_game(game_id: str, data: dict, token_info: dict):
     for key in users.keys():
         if users[key] is None:
             doc_ref = db.collection('games').document(game_id)
-            users[key]=user_id
+            users[key] = user_id
             doc_ref.update({'users': users})
             break
 
     doc_ref_2 = db.collection('users_games').document(user_id)
-    doc_ref_2.set({'active': True})
+    doc_ref_2.set({'game': game_id})
 
 
 if __name__ == '__main__':

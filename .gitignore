@@ -1,4 +1,5 @@
 frontend/build/
+frontend/node_modules/
 users-api/
 .idea/
 venv/
