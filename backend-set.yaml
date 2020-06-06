@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: manvsvirus
+      name: backend
+  strategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        app: manvsvirus
+        name: backend
+    spec:
+      containers:
+        - name: backend
+          image: mateustnovaweb/backend-manvsvirus:030620207
+          env:
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: deploysecrets
+                  key: jwtsecret
+          imagePullPolicy: Always
+          livenessProbe:
+            httpGet:
+              path: /v1/probe
+              port: 8080
+            initialDelaySeconds: 10
+          ports:
+            - containerPort: 8080
+              protocol: TCP
+              name: api
+          volumeMounts:
+            - mountPath: /app/cred
+              name: credentials
+              readOnly: true
+      imagePullSecrets:
+        - name: docker-novaweb
+      volumes:
+        - name: credentials
+          secret:
+            secretName: credentials
+            items:
+            - key: manvsvirus-2944b63208f8.json
+              path: manvsvirus-2944b63208f8.json

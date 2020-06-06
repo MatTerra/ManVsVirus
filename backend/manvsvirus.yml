@@ -12,6 +12,15 @@ basePath: "/v1"
 
 # Paths supported by the server application
 paths:
+  /probe:
+    get:
+      operationId: main.live
+      responses:
+        200:
+          description: "API ok"
+        500:
+          description: "API down"
+
   /game:
     get:
       operationId: main.read_game
@@ -79,6 +88,37 @@ paths:
           description: "Jogador entrou no jogo"
         500:
           description: "Ocorreu um erro"
+    put:
+      operationId: main.do_action
+      security:
+        - jwt: ['secret']
+      summary: "Realizar uma ação"
+      description: "Endpoint de realização de ação"
+      parameters:
+        - name: "game_id"
+          in: path
+          type: string
+          required: true
+        - name: "action"
+          in: body
+          required: true
+          schema:
+            type: object
+            properties:
+              action_type:
+                type: string
+              data:
+                type: string
+      responses:
+        200:
+          description: "Ação realizada"
+        401:
+          description: "Não autorizado"
+        400:
+          description: "Ação inválida"
+        500:
+          description: "Erro ao realizar a ação"
+
 
 securityDefinitions:
   jwt:

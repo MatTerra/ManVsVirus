@@ -4,3 +4,4 @@ connexion[swagger-ui]
 uwsgi
 python-jose
 firebase-admin
+google-cloud-firestore

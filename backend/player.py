@@ -1,9 +1,10 @@
 from typing import List
 
-from backend.city import CITIES, City
-from backend.constants import COLORS
-from backend.board import Board
-from backend.card import Card
+from city import CITIES, City
+from constants import COLORS
+from board import Board
+from card import Card
+import card
 
 
 class Player:
@@ -52,7 +53,17 @@ class Player:
                 'role': Player.ROLES.get(self.role),
                 'location': self.location.id,
                 'possible_moves': {city.name: city.id for city in self.possible_moves()},
-                'cards': {str(card.id): ({'type': 'city', 'name': card.city.name, 'color': COLORS[card.city.color], 'population': card.city.population}
-                                    if card.city is not None
-                                    else {'type': 'action', 'name': card.action}
-                                    ) for card in self.cards}}
+                'cards': [card.serialize() for card in self.cards]}
+
+
+def deserialize(data: dict, board: Board) -> Player:
+    player_id = data['id']
+    player_role = {Player.ROLES[key]: key for key in Player.ROLES}[data['role']]
+    player_location = board.locations[data['location']]
+    player_cards=list()
+    for serialized_card in data['cards']:
+        deserialized_card = card.deserialize(serialized_card)
+        player_cards.append(deserialized_card)
+    player = Player(id=player_id, role=player_role, board=board, location=player_location)
+    player.cards = player_cards
+    return player

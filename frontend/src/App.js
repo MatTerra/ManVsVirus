@@ -7,12 +7,13 @@ import Game from './pages/Game';
 import JoinGame from './pages/JoinGame';
 import Auth from './contexts/AuthContext';
 import ProtectedRoute from './utils/ProtectedRoute';
-import isOnGame from './utils/isOnGame';
-import {BrowserRouter as Router, Switch, Route, Redirect} from  'react-router-dom';
+import ReactNotification from "react-notifications-component";
+import {BrowserRouter as Router, Switch, Route} from  'react-router-dom';
 
 const App = () => {
   return(
     <Auth>
+      <ReactNotification />
       <Router>
         <div className="App">
           <Switch>

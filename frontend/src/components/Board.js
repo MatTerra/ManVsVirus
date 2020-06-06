@@ -1,14 +1,16 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
 import Cure from './Cure'
 import Location from './Location'
 import { backend } from '../utils/api'
 import Actions from './Actions'
 import jwtDecode from "jwt-decode";
 import Player from './Player'
+import { AuthContext } from '../contexts/AuthContext'
 
-function Board({ gameId }) {
+function Board() {
 
   const [researchCenters, setResearchCenters] = useState([])
+  const authContext = useContext(AuthContext);
 
   const [redCured, setRedCured] = useState(false);
   const [yellowCured, setYellowCured] = useState(false);
@@ -29,10 +31,14 @@ function Board({ gameId }) {
   const [turn, setTurn] = useState(false)
 
   const [infectionSpeed, setInfectionSpeed] = useState(2)
+  const [gameId, setGameId] = useState('')
+  const [logout, setLogout] = useState(false)
+
 
   useEffect(() => {
     backend.get("/game", { headers: { Authorization: `Bearer ${localStorage.getItem('loginToken')}` } }).then(response => {
       console.log(response)
+      setGameId(response.data.game_id)
       setInfectionSpeed(response.data.infection_speed)
       setRedCured(response.data.cures.Vermelho)
       setYellowCured(response.data.cures.Amarelo)
@@ -41,33 +47,35 @@ function Board({ gameId }) {
       setInfections(Object.values(response.data.infections))
       setInfectionsSum(response.data.infections_sum)
       setResearchCenters(response.data.research_centers)
-      let decode = jwtDecode(localStorage.getItem("loginToken"));
-      console.log(decode.primarysid)
-      console.log(Object.values(response.data.users)[response.data.turn.player])
-      setTurn(Object.values(response.data.users)[response.data.turn.player] == decode.primarysid)
-      Object.values(response.data.users).map((id, i) => {
-         if (id == decode.primarysid) {
-           setRole(Object.values(response.data.players)[i].role.toLowerCase().replace(' ','_')) 
+      setTurn(response.data.users[response.data.turn.player] == authContext.data.id)
+      response.data.users.map((id, i) => {
+         if (id == authContext.data.id) {
+           setRole(response.data.players[i].role) 
          } 
       })
       var arr = Array.from(new Array(48), () => []);
-      for (let player in response.data.players) {
-        arr[response.data.players[player].location] = arr[response.data.players[player].location].concat({ role: response.data.players[player].role.toLowerCase().replace(" ", "_") })
+      for (let player of response.data.players) {
+        arr[player.location].push({ role: player.role.toLowerCase().replace(" ", "_") })
       }
       setPlayers(arr)
-      console.log(arr[0])
     })
   }, [])
 
 
-
   return (
     <div class='App'>
-      
-      <div style={{ position: 'absolute', top: '1vh', width: '94vw', marginTop: '0', color: '#cfcfcf', height: '3rem' }}>
+      <div style={{ color: "#efefef", fontSize: '1.3vw', fontWeight: 'bold', padding: '2vh',position: 'absolute', top: '1vh', right:'5vw', alignSelf:'center', borderRadius: '5px', backgroundColor: '#606060bb', display: 'flex', flexDirection: 'column', alignItems:'center'}}>
+        <img src={process.env.PUBLIC_URL+'/player_'+role?.toLowerCase().replace(' ','_')+'512.png'} style={{ width: '3vw', margin: '1vh', marginLeft: '2vh', opacity:'100%' }} />
+        <label>Você é</label>
+        <label>{role}</label>
+        <img src={process.env.PUBLIC_URL+'/information.png'} style={{position: "absolute", top: '1vh', right:'1vh', width:'1.5vw', height:'1.5vw'}}/>
+      </div>
+
+      <div style={{ position: 'absolute', top: '3vh', width: '94vw', marginTop: '0', color: '#cfcfcf', height: '3rem' }}>
         <h1 style={{ position: 'absolute', top: '0', fontSize: '4rem', margin: '0', marginLeft: '6vw', opacity: '1', zIndex: '1' }}>Man VS Virus</h1>
         <div style={{ position: 'relative', top: '40%', marginLeft: '1vw', color: '#cbcbcb', opacity: '0.6', backgroundImage: 'url(' + process.env.PUBLIC_URL + '/ekg.png)', backgroundSize: "25% 100%", backgroundRepeat: 'no-repeat', height: '100%', width: '100%' }} />
       </div>
+
       <div style={{ position: 'absolute', top: '13vh', left: '67vw', marginTop: '0', color: '#cfcfcf', height: '4rem', display: "flex", flexDirection: 'row', alignItems: 'center' }}>
         <h3>Velocidade <br />de Infecção</h3>
         <div style={{ width: '4vw', height: '4vw', marginLeft: '1vw', textAlign: 'center', position: 'relative' }} class='gradSpeed'>
@@ -76,7 +84,8 @@ function Board({ gameId }) {
           <label style={{ position: 'absolute', top: '15%', left: '30%', fontSize: '2.5vw', fontWeight: 'bold' }}>{infectionSpeed}</label>
         </div>
       </div>
-      <div style={{ position: 'absolute', top: '0', alignSelf: 'center', backgroundColor: '#606060', borderRadius: '0 0 5px 5px' }}>
+
+      <div style={{ position: 'absolute', top: '0', alignSelf:'center', backgroundColor: '#606060', borderRadius: '0 0 5px 5px' }}>
         <div style={{ display: 'flex', flexDirection: 'row', alignItems: 'center', color: '#efefef', fontSize: '1.5vw' }}>
           <label style={{ marginLeft: '0.5vw' }}>{infectionsSum[0]}/24</label>
           <img src={process.env.PUBLIC_URL + '/cube_blue.png'} style={{ width: '1.5vw', margin: '1vh' }} />
@@ -86,9 +95,10 @@ function Board({ gameId }) {
           <img src={process.env.PUBLIC_URL + '/cube_yellow.png'} style={{ width: '1.5vw', margin: '1vh' }} />
           <label style={{ marginLeft: '0.5vw' }}>{infectionsSum[3]}/24</label>
           <img src={process.env.PUBLIC_URL + '/cube_red.png'} style={{ width: '1.5vw', margin: '1vh' }} />
-          <img src={process.env.PUBLIC_URL+'/player_'+role+'512.png'} style={{ width: '1.5vw', margin: '1vh', marginLeft: '2vh' }} />
+          <label style={{ margin: '1vh' }}> <span style={{fontWeight: 'bold'}}>Id:</span> {gameId}</label>
         </div>
       </div>
+      
       <Actions turn={turn} />
       <Cure key='red' color='red' top='50vh' cured={redCured} erradicated={redErradicated} />
       <Cure key='yellow' color='yellow' top='60vh' cured={yellowCured} erradicated={yellowErradicated} />

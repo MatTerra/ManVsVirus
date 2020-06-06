@@ -1,4 +1,4 @@
-from backend.constants import CITIES_DATA, COLORS
+from constants import CITIES_DATA, COLORS
 
 
 class City:
@@ -11,7 +11,7 @@ class City:
         self.connections = list()
         self.country = country
         self.locked_infection = False
-        self.infections = [0]*4
+        self.infections = [0] * 4
         self.research_center = False
 
     def infect(self, amount: int = 1, color: int = None) -> int:
@@ -52,7 +52,20 @@ class City:
                 'name': self.name,
                 'country': self.country,
                 'color': self.color,
-                'connections': {str(city.id): city.name for city in self.connections},}
+                'connections': {str(city.id): city.name for city in self.connections},
+                'population': self.population}
+
+
+def deserialize(data: dict) -> City:
+    if data is None:
+        return None
+    deserialized_city = City()
+    deserialized_city.id = data.get('id')
+    deserialized_city.color = data.get('color')
+    deserialized_city.name = data.get('name')
+    deserialized_city.population = data.get('population')
+    deserialized_city.country = data.get('country')
+    return deserialized_city
 
 
 CITIES = list()

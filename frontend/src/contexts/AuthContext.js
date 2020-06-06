@@ -15,6 +15,7 @@ const Auth = ({ children }) => {
     try {
       let decode = jwtDecode(token);
       setCurrentUser({
+        id: decode.primarysid,
         email: decode.email,
         role: decode.role,
         isLoggedIn: true,

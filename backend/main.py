@@ -1,11 +1,13 @@
 import json
 
-from backend.player import Player
-from backend.board import Board
-from backend.infection_deck import InfectionDeck
-from backend.player_deck import PlayerDeck
-from backend.constants import COLORS, FIREBASE
-from backend.city import CITIES
+from player import Player
+import player
+from board import Board
+from infection_deck import InfectionDeck
+from player_deck import PlayerDeck
+import deck
+from constants import COLORS, FIREBASE
+import board
 from random import shuffle, choice
 import string
 import hashlib
@@ -16,14 +18,33 @@ from firebase_admin import firestore
 
 
 class Controller:
-    def __init__(self, num_players: int = 2, difficulty: int = 0):
+    def __init__(self, num_players: int = 2, difficulty: int = 0, board: Board=None, cures: list=[False]*4,
+                 lost: bool=False, infection_deck: InfectionDeck=None, infection_sum: list=[0]*4, player_deck: PlayerDeck=None,
+                 outbreaks: int=0, players: list=[], turn_of: int=None, remaining_actions: int=4):
+        self.board = board
+        self.cures = cures
+        self.lost = lost
+        self.infection_deck = infection_deck
+        self.infection_sum = infection_sum
+        self.player_deck = player_deck
+        self.outbreaks = outbreaks
+        self.players = players
+        self.turn_of = turn_of
+        self.remaining_actions = remaining_actions
+        self.difficulty = difficulty
+        self.num_players = num_players
+
+
+    def start_game(self):
         self.board = Board()
+        self.board.initialize_board()
 
         self.cures = [False, False, False, False]
 
         self.lost = False
 
         self.infection_deck = InfectionDeck()
+        self.infection_deck.init_infection()
         self.infection_deck.shuffle()
 
         for i in range(3):
@@ -36,7 +57,7 @@ class Controller:
         infections_zip = list(zip(*infections))
         self.infection_sum = list(map(sum, infections_zip))
 
-        self.player_deck = PlayerDeck(difficulty + 2)
+        self.player_deck = PlayerDeck(self.difficulty + 2)
         self.player_deck.shuffle()
 
         self.outbreaks = 0
@@ -45,7 +66,7 @@ class Controller:
 
         shuffle(roles)
         self.players = list()
-        for i in range(num_players):
+        for i in range(self.num_players):
             role = roles.pop()
             player = Player(i, role, self.board)
             for i in range(2):
@@ -56,21 +77,26 @@ class Controller:
 
         self.turn_of = 0
         self.remaining_actions = 4
-        self.max_pop = 0
+        max_pop = 0
         for player in self.players:
             for card in player.cards:
-                if card.city.population > self.max_pop:
+                if card.city.population > max_pop:
                     self.turn_of = player.id
-                    self.max_pop = card.city.population
+                    max_pop = card.city.population
 
     def play_action(self, action: dict):
         player = self.players[self.turn_of]
         if action.get('type') == 'move':
-            self.move_player(action, player)
+            self.move_player(action['data'], player)
         elif action.get('type') == 'heal':
-            player.location.heal(player.role == 1 or self.cures[player.location.color], action.get('data').get('color'))
+            player.location.heal(player.role == 1 or self.cures[action.get('data')],
+                                 action.get('data') if action.get('data') != '' else None )
+            infections = [location.infections for location in self.board.locations]
+            infections_zip = list(zip(*infections))
+            self.infection_sum = list(map(sum, infections_zip))
         elif action.get('type') == 'skip':
             return self.end_round()
+
         self.remaining_actions -= 1
         if self.remaining_actions == 0:
             self.end_round()
@@ -85,10 +111,10 @@ class Controller:
             self.lost = True
             self.turn_of = None
 
-        infections = [location.infections for location in self.locations]
+        infections = [location.infections for location in self.board.locations]
         infections_zip = list(zip(*infections))
         self.infection_sum = list(map(sum, infections_zip))
-        if max(self.infection_sum > 24):
+        if max(self.infection_sum) > 24:
             self.lost = True
             self.turn_of = None
 
@@ -136,24 +162,41 @@ class Controller:
                 return cities
         return cities
 
-    def move_player(self, action, player):
-        destination = action.get('data')
-        destination_id = destination.get('destination')
-        if CITIES[destination_id] not in player.possible_moves():
+    def move_player(self, destination, player):
+        if self.board.locations[destination] not in player.possible_moves():
             raise ValueError("City not available to move")
-        player.move(CITIES[action.get('data').get('destination')])
+        player.move(self.board.locations[destination])
 
     def serialize(self):
         serial = self.board.serialize()
         serial.update({
-            'players': {str(player.id): player.serialize() for player in self.players},
+            'players': [player.serialize() for player in self.players],
             'outbreaks': self.outbreaks,
             'cures': {COLORS[i]: self.cures[i] for i in range(4)},
             'turn': {'player': self.turn_of, 'remaining_actions': self.remaining_actions},
             'infections_sum': self.infection_sum,
             'infection_deck': self.infection_deck.serialize(),
-            'player_deck': self.player_deck.serialize()})
+            'player_deck': self.player_deck.serialize(),
+            'lost': self.lost})
         return serial
+
+
+def deserialize(data: dict) -> Controller:
+    deserialized_board = board.deserialize(data)
+    deserialized_players = list()
+    for serialized_player in data['players']:
+        deserialized_players.append(player.deserialize(serialized_player, deserialized_board))
+    deserialized_infection_deck = deck.deserialize(data.get('infection_deck'))
+    deserialized_infection_deck.__class__ = InfectionDeck
+    deserialized_player_deck = deck.deserialize(data.get('player_deck'))
+    deserialized_player_deck.__class__ = PlayerDeck
+    game = Controller(num_players=len(deserialized_players), board=deserialized_board,
+                      cures=[data.get('cures')[color] for color in COLORS], lost=data.get('lost'),
+                    infection_deck=deserialized_infection_deck,
+                    infection_sum=data.get('infections_sum'), player_deck=deserialized_player_deck,
+                 outbreaks=data.get('outbreaks'), players=deserialized_players, turn_of=data.get('turn').get('player'),
+                      remaining_actions=data.get('turn').get('remaining_actions'))
+    return game
 
 
 def read_game(token_info: dict):
@@ -190,6 +233,7 @@ def create_game(game_data: dict, token_info: dict):
         return abort(404, "Missing parameters")
 
     game = Controller(num_players, difficulty)
+    game.start_game()
     # Use a service account
 
     db = firestore.client()
@@ -197,15 +241,17 @@ def create_game(game_data: dict, token_info: dict):
     if doc_ref_2.exists:
         abort(400, "User already in a game")
 
-    lettersAndDigits = string.ascii_letters + string.digits
-    game_id = ''.join((choice(lettersAndDigits) for i in range(32)))
+    letters_and_digits = string.ascii_letters + string.digits
+    game_id = ''.join((choice(letters_and_digits) for n in range(6)))
 
     doc_ref = db.collection('games').document(game_id)
     game_serialized = game.serialize()
-    users = {str(i): None for i in range(1, num_players)}
-    users['0'] = user_id
+    users = [None for n in range(1, num_players)]
+    users[0] = user_id
     game_serialized.update({'users': users,
-                            'password': str(hashlib.sha256(password).hexdigest())})
+                            'password': str(hashlib.sha256(password).hexdigest()),
+                            'num_players': num_players,
+                            'game_id': game_id})
     doc_ref.set(game_serialized)
 
     doc_ref_2 = db.collection('users_games').document(user_id)
@@ -213,6 +259,33 @@ def create_game(game_data: dict, token_info: dict):
 
     return game_id
 
+
+def do_action(game_id: str, action: dict, token_info: dict=None):
+    try:
+        user_id = token_info.get('primarysid')
+    except:
+        return abort(404, "Missing parameters")
+    db = firestore.client()
+    doc_ref_2 = db.collection('users_games').document(user_id).get().to_dict()
+    if doc_ref_2.get('game') != game_id:
+        return abort(400, "User is in a different game")
+    game_dict = db.collection('games').document(game_id).get().to_dict()
+    print(game_dict)
+
+
+    game = deserialize(game_dict)
+
+    if game_dict['users'][game.turn_of] != user_id:
+        return abort(401, "Not your turn")
+    # {'type':'move', 'data': {'destination': game.players[game.turn_of].possible_moves()[0].id}}
+    game.play_action(action)
+    game_serialized = game.serialize()
+
+    game_serialized.update({'users': game_dict.get('users'),
+                            'password': game_dict.get('password'),
+                            'game_id': game_id})
+    db.collection('games').document(game_id).set(game_serialized)
+    return game_serialized
 
 
 def join_game(game_id: str, data: dict, token_info: dict):
@@ -235,16 +308,24 @@ def join_game(game_id: str, data: dict, token_info: dict):
         abort(401, "Wrong Password")
 
     users = game_dict.get('users')
+    num_players = game_dict.get('num_players')
 
-    for key in users.keys():
-        if users[key] is None:
-            doc_ref = db.collection('games').document(game_id)
-            users[key] = user_id
-            doc_ref.update({'users': users})
-            break
+    if not len(users) < num_players:
+        return abort(401, "Jogo lotado")
+
+    doc_ref = db.collection('games').document(game_id)
+    users.append(user_id)
+    doc_ref.update({'users': users})
 
     doc_ref_2 = db.collection('users_games').document(user_id)
     doc_ref_2.set({'game': game_id})
+    return game_id
+
+
+def live():
+    db = firestore.client()
+    doc_ref_2 = db.collection('games').get()
+    return doc_ref_2 is None
 
 
 if __name__ == '__main__':
@@ -277,3 +358,4 @@ if __name__ == '__main__':
         print("round " + str(i))
 
     print(json.dumps(game.serialize()))
+

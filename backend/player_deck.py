@@ -1,8 +1,8 @@
 from random import shuffle
 
-from backend.city import CITIES
-from backend.card import Card
-from backend.deck import Deck
+from city import CITIES
+from card import Card
+from deck import Deck
 
 class PlayerDeck(Deck):
     def __init__(self, difficulty: int = 3):
@@ -11,22 +11,22 @@ class PlayerDeck(Deck):
         self.difficulty = difficulty
         for city in CITIES:
             card = Card(self.card_id, city)
-            self.deck.append(card)
+            self.cards.append(card)
             self.card_id += 1
 
 
     def add_epidemics(self):
-        decks_quant = int(len(self.deck)/self.difficulty)
-        decks = [ self.deck[x*decks_quant:(decks_quant*x)+decks_quant if x < self.difficulty-1 else None]
+        decks_quant = int(len(self.cards)/self.difficulty)
+        decks = [ self.cards[x*decks_quant:(decks_quant*x)+decks_quant if x < self.difficulty-1 else None]
                  for x in range(self.difficulty)]
         for i in range(self.difficulty):
             card = Card(self.card_id, action='Epidemic')
             self.card_id += 1
             decks[i].append(card)
             shuffle(decks[i])
-        self.deck = list()
+        self.cards = list()
         for deck_with_epidemic in decks:
-            self.deck += deck_with_epidemic
+            self.cards += deck_with_epidemic
 
 
 if __name__ == '__main__':

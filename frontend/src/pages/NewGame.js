@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useContext } from 'react'
 import '../assets/App.css'
 import Button from '../components/Button'
-import {Redirect} from 'react-router-dom'
+import { Redirect } from 'react-router-dom'
 import isOnGame from '../utils/isOnGame'
-import {backend} from '../utils/api'
+import { backend } from '../utils/api'
+import { AuthContext } from '../contexts/AuthContext'
 
 const NewGame = ({history}) => {
     const [nPlayers, setNPlayers] = useState(2)
@@ -11,6 +12,7 @@ const NewGame = ({history}) => {
     const [senha, setSenha] = useState('')
     const [game, setGame] = useState(false)
     const [join, setJoin] = useState(false)
+    const authContext = useContext(AuthContext);
 
     useEffect(() => { 
         async function changePage(){
@@ -27,10 +29,20 @@ const NewGame = ({history}) => {
         })
         
     }
+
+    function logout(){
+        localStorage.removeItem("loginToken");
+        authContext.logout();
+        history.push({
+          pathname: "/",
+        });
+        window.location.reload()
+    }
         
 
     return(
         <>
+        <img src={process.env.PUBLIC_URL+'/logout.png'} style={{position: 'absolute', top:'1.5vw', right:'1.5vw', width: '2vw', height: '2vw'}} onClick={() => logout()}/>
         {game && <Redirect to={{
                     pathname: "/jogo"
                   }}/>}

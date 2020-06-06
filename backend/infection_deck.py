@@ -1,31 +1,33 @@
 from random import shuffle
 from typing import Optional
 
-from backend.deck import Deck
-from backend.card import Card
-from backend.city import CITIES
+from deck import Deck
+from card import Card
+from city import CITIES
 
 
 class InfectionDeck(Deck):
 
     def __init__(self):
-        super().__init__()
+        super(InfectionDeck, self).__init__()
+
+    def init_infection(self):
         card_id = 0
         for city in CITIES:
             card = Card(card_id, city)
-            self.deck.append(card)
+            self.cards.append(card)
             card_id += 1
 
     def return_drawn(self) -> None:
         shuffle(self.drawn)
-        self.deck += self.drawn
+        self.cards += self.drawn
         self.drawn = list()
         return None
 
     def draw_last(self) -> Optional[Card]:
-        self.deck.reverse()
+        self.cards.reverse()
         card = self.draw_card()
-        self.deck.reverse()
+        self.cards.reverse()
         return card
 
 
