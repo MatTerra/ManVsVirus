@@ -52,7 +52,7 @@ class Player:
         return {'id': self.id,
                 'role': Player.ROLES.get(self.role),
                 'location': self.location.id,
-                'possible_moves': {city.name: city.id for city in self.possible_moves()},
+                'possible_moves': [{'name': city.name, 'id': city.id} for city in self.possible_moves()],
                 'cards': [card.serialize() for card in self.cards]}
 
 

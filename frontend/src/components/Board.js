@@ -9,6 +9,7 @@ import { AuthContext } from '../contexts/AuthContext'
 
 function Board() {
 
+  const colors=['Azul', 'Preto', 'Amarelo', 'Vermelho']
   const [researchCenters, setResearchCenters] = useState([])
   const authContext = useContext(AuthContext);
 
@@ -29,13 +30,15 @@ function Board() {
   const [role, setRole] = useState()
 
   const [turn, setTurn] = useState(false)
+  const [played, setPlayed] = useState(0)
 
   const [infectionSpeed, setInfectionSpeed] = useState(2)
   const [gameId, setGameId] = useState('')
   const [logout, setLogout] = useState(false)
+  const [possibleMoves, setPossibleMoves] = useState([{'name':'Atlanta', 'id':0}])
+  const [healable, setHealable] = useState([{name: 'NA', id: -1}])
 
-
-  useEffect(() => {
+  function update(){
     backend.get("/game", { headers: { Authorization: `Bearer ${localStorage.getItem('loginToken')}` } }).then(response => {
       console.log(response)
       setGameId(response.data.game_id)
@@ -47,10 +50,17 @@ function Board() {
       setInfections(Object.values(response.data.infections))
       setInfectionsSum(response.data.infections_sum)
       setResearchCenters(response.data.research_centers)
-      setTurn(response.data.users[response.data.turn.player] == authContext.data.id)
+      let decode = jwtDecode(localStorage.getItem('loginToken'));
+      setTurn(response.data.users[response.data.turn.player] == authContext.data.id || response.data.users[response.data.turn.player] == decode.primarysid)
       response.data.users.map((id, i) => {
-         if (id == authContext.data.id) {
+         if (id == authContext.data.id || id == decode.primarysid) {
            setRole(response.data.players[i].role) 
+           setPossibleMoves(response.data.players[i].possible_moves)
+           let locationInfections = Object.values(response.data.infections)[response.data.players[i].location]
+           console.log(locationInfections)
+           console.log(locationInfections.map((v, index) => {if (v > 0) {return {name: colors[index], id: index} }}).filter(v => v!=null))
+           setHealable(locationInfections.map((v, index) => {if (v > 0) {return {name: colors[index], id: index} }}).filter(v => v!=null))
+
          } 
       })
       var arr = Array.from(new Array(48), () => []);
@@ -59,7 +69,11 @@ function Board() {
       }
       setPlayers(arr)
     })
-  }, [])
+  }
+
+  useEffect(() => {
+    update()
+  }, [played])
 
 
   return (
@@ -98,8 +112,8 @@ function Board() {
           <label style={{ margin: '1vh' }}> <span style={{fontWeight: 'bold'}}>Id:</span> {gameId}</label>
         </div>
       </div>
-      
-      <Actions turn={turn} />
+      {console.log(healable)}
+      <Actions infected={healable} turn={turn} gameId={gameId} played={played} setPlayed={setPlayed} destinations={possibleMoves}/>
       <Cure key='red' color='red' top='50vh' cured={redCured} erradicated={redErradicated} />
       <Cure key='yellow' color='yellow' top='60vh' cured={yellowCured} erradicated={yellowErradicated} />
       <Cure key='blue' color='blue' top='70vh' cured={blueCured} erradicated={blueErradicated} />

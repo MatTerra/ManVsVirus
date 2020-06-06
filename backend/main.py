@@ -87,10 +87,10 @@ class Controller:
     def play_action(self, action: dict):
         player = self.players[self.turn_of]
         if action.get('type') == 'move':
-            self.move_player(action['data'], player)
+            self.move_player(int(action['data']), player)
         elif action.get('type') == 'heal':
-            player.location.heal(player.role == 1 or self.cures[action.get('data')],
-                                 action.get('data') if action.get('data') != '' else None )
+            player.location.heal(player.role == 1 or self.cures[int(action.get('data'))],
+                                 int(action.get('data')) if action.get('data') != '' else None )
             infections = [location.infections for location in self.board.locations]
             infections_zip = list(zip(*infections))
             self.infection_sum = list(map(sum, infections_zip))
