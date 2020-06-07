@@ -9,14 +9,21 @@ const Login = ({history, location}) => {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
 
+    async function askUserPermission() {
+        return await Notification.requestPermission();
+      }
+
     async function handleSubmit(e){
         setLoading(true);
+        
         e.preventDefault();
         try {
+            await askUserPermission()
             const response = await usersApi.post("/users/login",{
                 email: email,
                 password: password,
             });
+            
             localStorage.setItem("loginToken", response.data.data.token);
             setLoading(false);
             history.push({

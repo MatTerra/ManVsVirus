@@ -3,7 +3,7 @@ import city
 
 
 class Card:
-    def __init__(self, id: int = None, city: City = City(), action: str = None):
+    def __init__(self, id: int = None, city: City = None, action: str = None):
         self.id = id
         self.city = city
         self.action = action

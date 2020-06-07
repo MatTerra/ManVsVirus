@@ -4,20 +4,22 @@ from city import CITIES
 from card import Card
 from deck import Deck
 
+
 class PlayerDeck(Deck):
     def __init__(self, difficulty: int = 3):
         super().__init__()
-        self.card_id=0
         self.difficulty = difficulty
+
+    def init_player_deck(self):
+        self.card_id = 0
         for city in CITIES:
             card = Card(self.card_id, city)
             self.cards.append(card)
             self.card_id += 1
 
-
     def add_epidemics(self):
-        decks_quant = int(len(self.cards)/self.difficulty)
-        decks = [ self.cards[x*decks_quant:(decks_quant*x)+decks_quant if x < self.difficulty-1 else None]
+        decks_quant = int(len(self.cards) / self.difficulty)
+        decks = [self.cards[x * decks_quant:(decks_quant * x) + decks_quant if x < self.difficulty - 1 else None]
                  for x in range(self.difficulty)]
         for i in range(self.difficulty):
             card = Card(self.card_id, action='Epidemic')
@@ -35,4 +37,3 @@ if __name__ == '__main__':
     print(str([card.city.name if card.city is not None else card.action for card in deck.deck]))
     deck.add_epidemics()
     print(str([card.city.name if card.city is not None else card.action for card in deck.deck]))
-

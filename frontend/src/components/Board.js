@@ -10,6 +10,7 @@ import { AuthContext } from '../contexts/AuthContext'
 function Board() {
 
   const colors=['Azul', 'Preto', 'Amarelo', 'Vermelho']
+  const colorCodes=['blue', 'black', 'yellow', 'red']
   const [researchCenters, setResearchCenters] = useState([])
   const authContext = useContext(AuthContext);
 
@@ -37,6 +38,7 @@ function Board() {
   const [logout, setLogout] = useState(false)
   const [possibleMoves, setPossibleMoves] = useState([{'name':'Atlanta', 'id':0}])
   const [healable, setHealable] = useState([{name: 'NA', id: -1}])
+  const [cards, setCards] = useState([{id: -1, type: 'null'}])
 
   function update(){
     backend.get("/game", { headers: { Authorization: `Bearer ${localStorage.getItem('loginToken')}` } }).then(response => {
@@ -57,10 +59,9 @@ function Board() {
            setRole(response.data.players[i].role) 
            setPossibleMoves(response.data.players[i].possible_moves)
            let locationInfections = Object.values(response.data.infections)[response.data.players[i].location]
-           console.log(locationInfections)
-           console.log(locationInfections.map((v, index) => {if (v > 0) {return {name: colors[index], id: index} }}).filter(v => v!=null))
            setHealable(locationInfections.map((v, index) => {if (v > 0) {return {name: colors[index], id: index} }}).filter(v => v!=null))
-
+           let playerCards = response.data.players[i].cards
+           setCards(playerCards)
          } 
       })
       var arr = Array.from(new Array(48), () => []);
@@ -75,15 +76,33 @@ function Board() {
     update()
   }, [played])
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      update()
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
 
   return (
     <div class='App'>
-      <div style={{ color: "#efefef", fontSize: '1.3vw', fontWeight: 'bold', padding: '2vh',position: 'absolute', top: '1vh', right:'5vw', alignSelf:'center', borderRadius: '5px', backgroundColor: '#606060bb', display: 'flex', flexDirection: 'column', alignItems:'center'}}>
+      <div style={{ color: "#efefef", fontSize: '1.3vw', fontWeight: 'bold', padding: '2vh',position: 'absolute', top: '1vh', right:'5vw', alignSelf:'center', borderRadius: '5px', backgroundColor: '#606060bb', display: 'flex', flexDirection: 'column', alignItems:'center', width: '13vw'}}>
         <img src={process.env.PUBLIC_URL+'/player_'+role?.toLowerCase().replace(' ','_')+'512.png'} style={{ width: '3vw', margin: '1vh', marginLeft: '2vh', opacity:'100%' }} />
         <label>Você é</label>
         <label>{role}</label>
         <img src={process.env.PUBLIC_URL+'/information.png'} style={{position: "absolute", top: '1vh', right:'1vh', width:'1.5vw', height:'1.5vw'}}/>
       </div>
+
+      <div style={{display: 'flex', flexDirection:'column', paddingTop:'1vh', paddingBottom: '1vh', position:'absolute', left:'68vw', bottom:'3vh', alignSelf: 'center', backgroundColor:'#606060', borderRadius:'5px', width:'10vw'}}>
+        {cards.map((card, i) => 
+          <div style={{display: 'flex', flexDirection:'row', justifyContent:'space-between', backgroundColor: i%2==0?"#454545":"#555555", alignItems: 'center'}}>
+          <label style={{color: '#efefef', paddingLeft: '1vh'}}>
+            {card.type == 'city'?card.city.name:card.action}
+          </label>
+          {card.type == 'city' && <img style={{width:'1vh', height: '1vh', paddingRight:'1vh'}} src={process.env.PUBLIC_URL+'/location_'+colorCodes[card.city.color]+'.png'}/>}
+          </div>
+        )}
+      </div>  
 
       <div style={{ position: 'absolute', top: '3vh', width: '94vw', marginTop: '0', color: '#cfcfcf', height: '3rem' }}>
         <h1 style={{ position: 'absolute', top: '0', fontSize: '4rem', margin: '0', marginLeft: '6vw', opacity: '1', zIndex: '1' }}>Man VS Virus</h1>
@@ -112,8 +131,7 @@ function Board() {
           <label style={{ margin: '1vh' }}> <span style={{fontWeight: 'bold'}}>Id:</span> {gameId}</label>
         </div>
       </div>
-      {console.log(healable)}
-      <Actions infected={healable} turn={turn} gameId={gameId} played={played} setPlayed={setPlayed} destinations={possibleMoves}/>
+      <Actions infected={healable} cards={cards} turn={turn} gameId={gameId} played={played} setPlayed={setPlayed} destinations={possibleMoves}/>
       <Cure key='red' color='red' top='50vh' cured={redCured} erradicated={redErradicated} />
       <Cure key='yellow' color='yellow' top='60vh' cured={yellowCured} erradicated={yellowErradicated} />
       <Cure key='blue' color='blue' top='70vh' cured={blueCured} erradicated={blueErradicated} />

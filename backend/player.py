@@ -39,10 +39,7 @@ class Player:
         return [card.city for card in self.cards if card.city is not None]
 
     def move(self, location: City):
-        if location in self.possible_moves():
-            self.location = location
-        else:
-            raise Exception()
+        self.location = location
 
     def add_card(self, card: Card) -> int:
         self.cards.append(card)

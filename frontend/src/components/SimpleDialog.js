@@ -18,7 +18,7 @@ function SimpleDialog({onClose, open, list, type}) {
 
     return (
       <Dialog onClose={handleClose} aria-labelledby="simple-dialog-title" open={open}>
-        <DialogTitle id="simple-dialog-title">{type=='move'?'Para onde deseja ir?':type=='heal'?"Que cor deseja curar?":"Te vira"}</DialogTitle>
+        <DialogTitle id="simple-dialog-title">{type=='move'?'Para onde deseja ir?':type=='heal'?"Que cor deseja curar?":type=='travel'?"Para onde deseja viajar?":"Te vira"}</DialogTitle>
         <List>
           {list.map((item) => (
             <ListItem button onClick={() => handleListItemClick(item.id)} key={item.id}>

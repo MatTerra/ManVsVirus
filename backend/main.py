@@ -58,8 +58,8 @@ class Controller:
         self.infection_sum = list(map(sum, infections_zip))
 
         self.player_deck = PlayerDeck(self.difficulty + 2)
+        self.player_deck.init_player_deck()
         self.player_deck.shuffle()
-
         self.outbreaks = 0
 
         roles = list(Player.ROLES.keys())
@@ -94,6 +94,8 @@ class Controller:
             infections = [location.infections for location in self.board.locations]
             infections_zip = list(zip(*infections))
             self.infection_sum = list(map(sum, infections_zip))
+        elif action.get('type') == 'travel':
+            self.travel_player(int(action['data']), player)
         elif action.get('type') == 'skip':
             return self.end_round()
 
@@ -165,6 +167,12 @@ class Controller:
     def move_player(self, destination, player):
         if self.board.locations[destination] not in player.possible_moves():
             raise ValueError("City not available to move")
+        player.move(self.board.locations[destination])
+
+    def travel_player(self, destination, player):
+        if self.board.locations[destination].name not in [city.name for city in player.possible_travel_to()]:
+            raise ValueError("City not available to travel")
+        player.cards = [card for card in player.cards if card.city.id != destination]
         player.move(self.board.locations[destination])
 
     def serialize(self):
@@ -283,6 +291,7 @@ def do_action(game_id: str, action: dict, token_info: dict=None):
 
     game_serialized.update({'users': game_dict.get('users'),
                             'password': game_dict.get('password'),
+                            'num_players': game_dict.get('num_players'),
                             'game_id': game_id})
     db.collection('games').document(game_id).set(game_serialized)
     return game_serialized
