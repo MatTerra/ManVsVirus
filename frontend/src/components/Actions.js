@@ -27,11 +27,12 @@ const Actions = ({turn, gameId, played, setPlayed, destinations, curable, infect
     const handleClose = (value) => {
         setOpen(false);
         if(value == 'abort'){
+            setSelectedType('')
             return
         }
         if (selectedType == 'discard'){
             let actions = cards.filter(v => v.type == 'action')
-            cards = (cards.filter(v => v.type == 'city').filter(v=>v.city.id != value)).concat(actions)
+            cards = (cards.filter(v => v.type == 'city').filter(v=>v.city.id != value)).concat(actions) 
             setOptions(cards)
         }
         action(value);

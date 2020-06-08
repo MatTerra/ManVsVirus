@@ -145,7 +145,6 @@ class Controller:
         if not skip_player:
             if not self.player_card_stage(self.turn_of):
                 self.lost = True
-                self.turn_of = None
 
         if len(self.players[self.turn_of].cards) > 7:
             self.discard = len(self.players[self.turn_of].cards) - 7
@@ -154,16 +153,15 @@ class Controller:
         self.infection_stage()
         if self.outbreaks > 7:
             self.lost = True
-            self.turn_of = None
 
         infections = [location.infections for location in self.board.locations]
         infections_zip = list(zip(*infections))
         self.infection_sum = list(map(sum, infections_zip))
         if max(self.infection_sum) > 24:
             self.lost = True
-            self.turn_of = None
 
         if self.lost:
+            self.turn_of = None
             return
 
         self.board.unlock_cities()
