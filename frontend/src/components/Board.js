@@ -4,8 +4,10 @@ import Location from './Location'
 import { backend } from '../utils/api'
 import Actions from './Actions'
 import jwtDecode from "jwt-decode";
-import Player from './Player'
 import { AuthContext } from '../contexts/AuthContext'
+import Alert from '@material-ui/lab/Alert';
+import { makeStyles } from '@material-ui/core'
+import { Redirect } from 'react-router-dom'
 
 function Board() {
 
@@ -13,6 +15,7 @@ function Board() {
   const colorCodes=['blue', 'black', 'yellow', 'red']
   const [researchCenters, setResearchCenters] = useState([])
   const authContext = useContext(AuthContext);
+  const [selectedType, setSelectedType] = useState('')
 
   const [redCured, setRedCured] = useState(false);
   const [yellowCured, setYellowCured] = useState(false);
@@ -39,10 +42,16 @@ function Board() {
   const [possibleMoves, setPossibleMoves] = useState([{'name':'Atlanta', 'id':0}])
   const [healable, setHealable] = useState([{name: 'NA', id: -1}])
   const [cards, setCards] = useState([{id: -1, type: 'null'}])
+  const [canBuild, setCanBuild] = useState(false)
+  const [curable, setCurable]=useState([{name:'NA', id:-1}])
+  const [lost, setLost] = useState(false)
+  const [confirmedLost, setConfirmedLost] = useState(false)
+  const [discard, setDiscard] = useState(0)
 
   function update(){
     backend.get("/game", { headers: { Authorization: `Bearer ${localStorage.getItem('loginToken')}` } }).then(response => {
       console.log(response)
+      setLost(response.data.lost)
       setGameId(response.data.game_id)
       setInfectionSpeed(response.data.infection_speed)
       setRedCured(response.data.cures.Vermelho)
@@ -52,16 +61,37 @@ function Board() {
       setInfections(Object.values(response.data.infections))
       setInfectionsSum(response.data.infections_sum)
       setResearchCenters(response.data.research_centers)
+      setDiscard(response.data.discard)
       let decode = jwtDecode(localStorage.getItem('loginToken'));
       setTurn(response.data.users[response.data.turn.player] == authContext.data.id || response.data.users[response.data.turn.player] == decode.primarysid)
       response.data.users.map((id, i) => {
          if (id == authContext.data.id || id == decode.primarysid) {
-           setRole(response.data.players[i].role) 
+           let location = response.data.players[i].location
+           let playerRole = response.data.players[i].role
+           setRole(playerRole) 
            setPossibleMoves(response.data.players[i].possible_moves)
-           let locationInfections = Object.values(response.data.infections)[response.data.players[i].location]
+           let locationInfections = Object.values(response.data.infections)[location]
            setHealable(locationInfections.map((v, index) => {if (v > 0) {return {name: colors[index], id: index} }}).filter(v => v!=null))
            let playerCards = response.data.players[i].cards
+           let playerCityCards = playerCards.filter(v => v.type=='city')
+           let amountToCure =  playerRole == 'Scientist'?4:5
+           let colorsCurable = Array(0)
+           for (let i=0; i<4; i++){
+            if (playerCards.filter(v => v.city.color == i).length >= amountToCure){
+              colorsCurable = colorsCurable.concat({name:colors[i], id: i})
+            }
+           }
+           setCurable(colorsCurable)
            setCards(playerCards)
+           console.log()
+           if ((playerCityCards.filter((value) => location == value.id).length > 0 
+                    || response.data.players[i].role == 'Operations Expert') 
+                    && !(response.data.research_centers.filter(v => v==location).length > 0)){
+             setCanBuild(true)
+           } else {
+             setCanBuild(false)
+           }
+           
          } 
       })
       var arr = Array.from(new Array(48), () => []);
@@ -69,6 +99,8 @@ function Board() {
         arr[player.location].push({ role: player.role.toLowerCase().replace(" ", "_") })
       }
       setPlayers(arr)
+    }).catch(err =>{
+      console.log(err)
     })
   }
 
@@ -79,13 +111,21 @@ function Board() {
   useEffect(() => {
     const interval = setInterval(() => {
       update()
-    }, 1000);
+    }, 2000);
     return () => clearInterval(interval);
   }, []);
 
 
   return (
     <div class='App'>
+      {lost && <Alert severity='error' style={{position: 'absolute', alignItems:'center', top:'5vw', zIndex: '20',width: '40vw', alignSelf:'center', flexDirection:'row'}} onClose={() => {
+        backend.delete("/game/"+gameId, { headers: { Authorization: `Bearer ${localStorage.getItem('loginToken')}`}}).then(response => {
+          setConfirmedLost(true)
+         })
+      }}><strong>Você perdeu o jogo!</strong></Alert>}
+      {confirmedLost && <Redirect to={{
+                    pathname: "/"
+                  }}/>}
       <div style={{ color: "#efefef", fontSize: '1.3vw', fontWeight: 'bold', padding: '2vh',position: 'absolute', top: '1vh', right:'5vw', alignSelf:'center', borderRadius: '5px', backgroundColor: '#606060bb', display: 'flex', flexDirection: 'column', alignItems:'center', width: '13vw'}}>
         <img src={process.env.PUBLIC_URL+'/player_'+role?.toLowerCase().replace(' ','_')+'512.png'} style={{ width: '3vw', margin: '1vh', marginLeft: '2vh', opacity:'100%' }} />
         <label>Você é</label>
@@ -131,7 +171,7 @@ function Board() {
           <label style={{ margin: '1vh' }}> <span style={{fontWeight: 'bold'}}>Id:</span> {gameId}</label>
         </div>
       </div>
-      <Actions infected={healable} cards={cards} turn={turn} gameId={gameId} played={played} setPlayed={setPlayed} destinations={possibleMoves}/>
+      <Actions selectedType={selectedType} setSelectedType={setSelectedType} curable={curable} discard={discard} build={canBuild} infected={healable} cards={cards} turn={turn} gameId={gameId} played={played} setPlayed={setPlayed} destinations={possibleMoves}/>
       <Cure key='red' color='red' top='50vh' cured={redCured} erradicated={redErradicated} />
       <Cure key='yellow' color='yellow' top='60vh' cured={yellowCured} erradicated={yellowErradicated} />
       <Cure key='blue' color='blue' top='70vh' cured={blueCured} erradicated={blueErradicated} />

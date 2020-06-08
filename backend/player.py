@@ -30,7 +30,8 @@ class Player:
             possible += self.board.get_research_centers()
         if self.location in possible:
             possible.remove(self.location)
-        return possible
+        possible = set(possible)
+        return list(possible)
 
     def possible_travel_from(self) -> bool:
         return self.location in [card.city for card in self.cards if card.city is not None]

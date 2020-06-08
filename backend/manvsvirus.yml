@@ -88,6 +88,19 @@ paths:
           description: "Jogador entrou no jogo"
         500:
           description: "Ocorreu um erro"
+    delete:
+      operationId: main.leave_game
+      security:
+        - jwt: ['secret']
+      parameters:
+        - name: "game_id"
+          in: path
+          type: string
+          required: true
+      responses:
+        200:
+          description: "Jogador saiu do jogo"
+
     put:
       operationId: main.do_action
       security:

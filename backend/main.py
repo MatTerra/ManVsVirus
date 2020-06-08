@@ -20,7 +20,7 @@ from firebase_admin import firestore
 class Controller:
     def __init__(self, num_players: int = 2, difficulty: int = 0, board: Board=None, cures: list=[False]*4,
                  lost: bool=False, infection_deck: InfectionDeck=None, infection_sum: list=[0]*4, player_deck: PlayerDeck=None,
-                 outbreaks: int=0, players: list=[], turn_of: int=None, remaining_actions: int=4):
+                 outbreaks: int=0, players: list=[], turn_of: int=None, remaining_actions: int=4, discard: int=0):
         self.board = board
         self.cures = cures
         self.lost = lost
@@ -33,13 +33,14 @@ class Controller:
         self.remaining_actions = remaining_actions
         self.difficulty = difficulty
         self.num_players = num_players
+        self.discard = discard
 
 
     def start_game(self):
         self.board = Board()
         self.board.initialize_board()
 
-        self.cures = [False, False, False, False]
+        self.cures = [False]*4
 
         self.lost = False
 
@@ -86,6 +87,8 @@ class Controller:
 
     def play_action(self, action: dict):
         player = self.players[self.turn_of]
+        if self.discard > 0 and action.get('type') != 'discard':
+            raise ValueError("Can only discard now!")
         if action.get('type') == 'move':
             self.move_player(int(action['data']), player)
         elif action.get('type') == 'heal':
@@ -98,15 +101,55 @@ class Controller:
             self.travel_player(int(action['data']), player)
         elif action.get('type') == 'skip':
             return self.end_round()
+        elif action.get('type') == 'build':
+            self.build(player)
+        elif action.get('type') == 'cure':
+            self.cure(int(action['data']), player)
+        elif action.get('type') == 'discard':
+            self.discard_action(int(action['data']), player)
+            return self.end_round(action.get('type') == 'discard')
+
 
         self.remaining_actions -= 1
         if self.remaining_actions == 0:
             self.end_round()
 
-    def end_round(self):
-        if not self.player_card_stage(self.turn_of):
-            self.lost = True
-            self.turn_of = None
+    def build(self, player):
+        if player.location.name not in [card.city.name for card in player.cards if card.city is not None] \
+                and player.role != 4:
+            raise ValueError("City card not available")
+        if player.role != 4:
+            action_cards = [card for card in player.cards if card.city is None]
+            location_cards = [card for card in player.cards if card.city is not None]
+            player.cards = [card for card in location_cards if card.city.id != player.location.id] + action_cards
+        self.board.add_research_center(player.location.id)
+
+    def cure(self, color, player):
+        amount_to_cure= 5 if player.role != 5 else 4
+        location_cards = [card for card in player.cards if card.city is not None]
+        action_cards = [card for card in player.cards if card.city is None]
+        cards_to_cure = [card for card in location_cards if card.city.color == color]
+        if len(cards_to_cure) < amount_to_cure:
+            raise ValueError("Not enough cards to cure")
+        while len(cards_to_cure) > amount_to_cure:
+            cards_to_cure.pop(0)
+        location_cards = [card for card in location_cards if card not in cards_to_cure]
+        player.cards = location_cards+action_cards
+        self.cures[color] = True
+
+    def discard_action(self, card_id, player):
+        player.cards = [card for card in player.cards if card.id != card_id]
+        self.discard -= 1
+
+    def end_round(self, skip_player: bool=False):
+        if not skip_player:
+            if not self.player_card_stage(self.turn_of):
+                self.lost = True
+                self.turn_of = None
+
+        if len(self.players[self.turn_of].cards) > 7:
+            self.discard = len(self.players[self.turn_of].cards) - 7
+            return
 
         self.infection_stage()
         if self.outbreaks > 7:
@@ -185,7 +228,9 @@ class Controller:
             'infections_sum': self.infection_sum,
             'infection_deck': self.infection_deck.serialize(),
             'player_deck': self.player_deck.serialize(),
-            'lost': self.lost})
+            'lost': self.lost,
+            'discard': self.discard
+        })
         return serial
 
 
@@ -203,7 +248,7 @@ def deserialize(data: dict) -> Controller:
                     infection_deck=deserialized_infection_deck,
                     infection_sum=data.get('infections_sum'), player_deck=deserialized_player_deck,
                  outbreaks=data.get('outbreaks'), players=deserialized_players, turn_of=data.get('turn').get('player'),
-                      remaining_actions=data.get('turn').get('remaining_actions'))
+                      remaining_actions=data.get('turn').get('remaining_actions'), discard=data.get('discard'))
     return game
 
 
@@ -286,7 +331,10 @@ def do_action(game_id: str, action: dict, token_info: dict=None):
     if game_dict['users'][game.turn_of] != user_id:
         return abort(401, "Not your turn")
     # {'type':'move', 'data': {'destination': game.players[game.turn_of].possible_moves()[0].id}}
-    game.play_action(action)
+    try:
+        game.play_action(action)
+    except ValueError as e:
+        return abort(401, str(e))
     game_serialized = game.serialize()
 
     game_serialized.update({'users': game_dict.get('users'),
@@ -328,6 +376,24 @@ def join_game(game_id: str, data: dict, token_info: dict):
 
     doc_ref_2 = db.collection('users_games').document(user_id)
     doc_ref_2.set({'game': game_id})
+    return game_id
+
+
+def leave_game(game_id: str, token_info: dict):
+    try:
+        user_id = token_info.get('primarysid')
+    except:
+        return abort(404, "Missing parameters")
+    db = firestore.client()
+    doc_ref_2 = db.collection('users_games').document(user_id).get()
+    if not doc_ref_2.exists:
+        abort(400, "User not in a game")
+    game_id_reg = doc_ref_2.to_dict().get('game')
+    if game_id_reg is None:
+        abort(400, "User not in a game")
+    if game_id != game_id_reg:
+        abort(400, "User not in this game")
+    doc_ref_2 = db.collection('users_games').document(user_id).delete()
     return game_id
 
 

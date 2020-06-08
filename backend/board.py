@@ -22,20 +22,18 @@ class Board:
         self.research_centers = list()
         self.current_speed = 0
         self.infection_speeds = (2, 2, 2, 3, 3, 4, 4)
-        self.add_research_center(self.locations[0])
+        self.add_research_center(0)
 
     def infect(self, location: int, amount: int = 1):
         outbreaks = self.locations[location].infect(amount)
 
         return outbreaks
 
-    def add_research_center(self, city: City):
-        city.research_center = True;
-        if len(self.research_centers) < 6:
-            self.research_centers.append(city)
-        else:
+    def add_research_center(self, city_id: int):
+        self.locations[city_id].research_center = True
+        if len(self.research_centers) == 6:
             self.research_centers.pop(0).research_center = False
-            self.research_centers.append(city)
+        self.research_centers.append(self.locations[city_id])
 
     def get_research_centers(self):
         return self.research_centers
@@ -63,7 +61,7 @@ def deserialize(data: dict):
         for connection in data.get('cities')[serialized_city].get('connections'):
             deserialized_board.locations[int(serialized_city)].add_connection(deserialized_board.locations[int(connection)])
     for research_center in data.get('research_centers'):
-        deserialized_board.add_research_center(deserialized_board.locations[research_center])
+        deserialized_board.add_research_center(research_center)
     deserialized_board.current_speed = data.get('current_speed')
     for infections in data.get('infections'):
         deserialized_board.locations[int(infections)].infections = data.get('infections')[infections]
