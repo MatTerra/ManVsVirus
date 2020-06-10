@@ -127,7 +127,7 @@ function Board() {
                     pathname: "/"
                   }}/>}
       <div style={{ color: "#efefef", fontSize: '1.3vw', fontWeight: 'bold', padding: '2vh',position: 'absolute', top: '1vh', right:'5vw', alignSelf:'center', borderRadius: '5px', backgroundColor: '#606060bb', display: 'flex', flexDirection: 'column', alignItems:'center', width: '13vw'}}>
-        <img src={process.env.PUBLIC_URL+'/player_'+role?.toLowerCase().replace(' ','_')+'512.png'} style={{ width: '3vw', margin: '1vh', marginLeft: '2vh', opacity:'100%' }} />
+        <img src={process.env.PUBLIC_URL+'/player_'+role.toLowerCase().replace(' ','_')+'512.png'} style={{ width: '3vw', margin: '1vh', marginLeft: '2vh', opacity:'100%' }} />
         <label>Você é</label>
         <label>{role}</label>
         <img src={process.env.PUBLIC_URL+'/information.png'} style={{position: "absolute", top: '1vh', right:'1vh', width:'1.5vw', height:'1.5vw'}}/>

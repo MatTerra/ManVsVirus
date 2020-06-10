@@ -1,13 +1,3 @@
-import json
-
-from player import Player
-import player
-from board import Board
-from infection_deck import InfectionDeck
-from player_deck import PlayerDeck
-import deck
-from constants import COLORS, FIREBASE
-import board
 from random import shuffle, choice
 import string
 import hashlib
@@ -15,6 +5,17 @@ import hashlib
 from flask import abort
 
 from firebase_admin import firestore
+
+import json
+
+from backend.player import Player
+from backend import player
+from backend.board import Board
+from backend.infection_deck import InfectionDeck
+from backend.player_deck import PlayerDeck
+from backend import deck
+from backend.constants import COLORS, FIREBASE
+from backend import board
 
 
 class Controller:
@@ -195,12 +196,17 @@ class Controller:
         self.infection_deck.return_drawn()
 
     def infection_stage(self):
+        forbiden =  list()
+        connections = [player.location.connections for player in self.players if player.role == 2]
+        forbiden = [city.id for city in connections] + [player.location for player in self.players if player.role == 2]
         cities = list()
         for i in range(self.board.infection_speeds[self.board.current_speed]):
             card = self.infection_deck.draw_card()
+
             if card is not None:
-                self.outbreaks += self.board.infect(card.city.id)
-                cities.append(self.board.locations[card.city.id])
+                if card.city.id not in forbiden:
+                    self.outbreaks += self.board.infect(card.city.id)
+                    cities.append(self.board.locations[card.city.id])
             else:
                 return cities
         return cities

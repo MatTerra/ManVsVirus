@@ -1,10 +1,10 @@
 from typing import List
 
-from city import CITIES, City
-from constants import COLORS
-from board import Board
-from card import Card
-import card
+from backend.city import CITIES, City
+from backend.constants import COLORS
+from backend.board import Board
+from backend.card import Card
+from backend import card
 
 
 class Player:

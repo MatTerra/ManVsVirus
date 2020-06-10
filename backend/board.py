@@ -1,6 +1,6 @@
-from city import City
-from constants import CITIES_DATA
-import city
+from backend.city import City
+from backend.constants import CITIES_DATA
+from backend import city
 
 
 class Board:
@@ -66,21 +66,3 @@ def deserialize(data: dict):
     for infections in data.get('infections'):
         deserialized_board.locations[int(infections)].infections = data.get('infections')[infections]
     return deserialized_board
-
-
-if __name__ == '__main__':
-    board = Board()
-    board.start_game().keys()
-    board.infection_deck.return_drawn()
-    cidades = board.infection_stage()
-    for cidade in cidades:
-        print(cidade.serialize())
-        print(board.outbreaks)
-
-    print(board.locations[0].serialize())
-    for i in range(6):
-        board.add_research_center(board.locations[i + 1])
-        print(board.research_centers)
-
-    print(board.locations[0].serialize())
-    print(board.serialize())

@@ -14,7 +14,7 @@ basePath: "/v1"
 paths:
   /probe:
     get:
-      operationId: main.live
+      operationId: backend.main.live
       responses:
         200:
           description: "API ok"
@@ -23,7 +23,7 @@ paths:
 
   /game:
     get:
-      operationId: main.read_game
+      operationId: backend.main.read_game
       security:
         - jwt: ['secret']
       summary: "Recuperar jogo"
@@ -35,7 +35,7 @@ paths:
           description: "Jogo não encontrado"
 
     post:
-      operationId: main.create_game
+      operationId: backend.main.create_game
       security:
         - jwt: ['secret']
       summary: "Criação de novo jogo"
@@ -64,7 +64,7 @@ paths:
 
   /game/{game_id}:
     post:
-      operationId: main.join_game
+      operationId: backend.main.join_game
       security:
         - jwt: ['secret']
       summary: "Juntar-se a um jogo"
@@ -89,7 +89,7 @@ paths:
         500:
           description: "Ocorreu um erro"
     delete:
-      operationId: main.leave_game
+      operationId: backend.main.leave_game
       security:
         - jwt: ['secret']
       parameters:
@@ -102,7 +102,7 @@ paths:
           description: "Jogador saiu do jogo"
 
     put:
-      operationId: main.do_action
+      operationId: backend.main.do_action
       security:
         - jwt: ['secret']
       summary: "Realizar uma ação"
@@ -139,4 +139,4 @@ securityDefinitions:
     name: Authorization
     in: header
     x-authentication-scheme: Bearer
-    x-bearerInfoFunc: auth.decode_token
+    x-bearerInfoFunc: backend.auth.decode_token

@@ -1,5 +1,5 @@
-from city import City
-import city
+from backend.city import City
+from backend import city
 
 
 class Card:
@@ -7,6 +7,9 @@ class Card:
         self.id = id
         self.city = city
         self.action = action
+
+    def __eq__(self, other):
+        return self.__dict__ == other.__dict__
 
     def serialize(self):
         if self.city is None:

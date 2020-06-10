@@ -1,14 +1,19 @@
 from random import shuffle
 from typing import Optional
 
-from card import Card
-import card
+from backend.card import Card
+from backend import card
 
 
 class Deck:
     def __init__(self):
         self.cards = list()
         self.drawn = list()
+
+    def __eq__(self, other):
+        if type(other) != type(self):
+            return False
+        return self.cards == other.cards and self.drawn == other.drawn
 
     def shuffle(self):
         shuffle(self.cards)
@@ -22,8 +27,8 @@ class Deck:
             return None
 
     def serialize(self):
-        return {'drawn': [card.serialize() for card in self.drawn],
-                'cards': [card.serialize() for card in self.cards]}
+        return {'drawn': [_card.serialize() for _card in self.drawn],
+                'cards': [_card.serialize() for _card in self.cards]}
 
 
 def deserialize(data: dict) -> Deck:

@@ -1,9 +1,9 @@
 from random import shuffle
 from typing import Optional
 
-from deck import Deck
-from card import Card
-from city import CITIES
+from backend.deck import Deck
+from backend.card import Card
+from backend.city import CITIES
 
 
 class InfectionDeck(Deck):

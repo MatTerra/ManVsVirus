@@ -1,3 +1,5 @@
 frontend/
 venv/
 users-api/
+test/
+*.yaml

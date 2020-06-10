@@ -1,8 +1,8 @@
 from random import shuffle
 
-from city import CITIES
-from card import Card
-from deck import Deck
+from backend.city import CITIES
+from backend.card import Card
+from backend.deck import Deck
 
 
 class PlayerDeck(Deck):

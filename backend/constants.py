@@ -6,10 +6,10 @@ PRETO = 1
 AMARELO = 2
 VERMELHO = 3
 
-CREDENTIALS = Certificate('cred/manvsvirus-2944b63208f8.json')
+CREDENTIALS = Certificate('backend/cred/manvsvirus-2944b63208f8.json')
 FIREBASE = initialize_app(CREDENTIALS, {'app': 'manvsvirus'})
 
-COLORS=['Azul', 'Preto', 'Amarelo', 'Vermelho']
+COLORS = ['Azul', 'Preto', 'Amarelo', 'Vermelho']
 
 CITIES_DATA = (
     ("Atlanta", "Estados Unidos", 4.715, AZUL, (1, 4, 25)),  # 1
