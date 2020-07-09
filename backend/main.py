@@ -52,8 +52,8 @@ class Controller:
         for i in range(3):
             for j in range(3):
                 card = self.infection_deck.draw_card()
-                self.board.locations[card.city.id].infect(amount=(3 - i))
-                print(str(self.board.locations[card.city.id].infections))
+                self.board.locations[card.city.id_].infect(amount=(3 - i))
+                print(str(self.board.locations[card.city.id_].infections))
 
         infections = [location.infections for location in self.board.locations]
         infections_zip = list(zip(*infections))
@@ -190,7 +190,7 @@ class Controller:
 
         # Infect
         card = self.infection_deck.draw_last()
-        self.outbreaks += self.board.infect(card.city.id, 3)
+        self.outbreaks += self.board.infect(card.city.id_, 3)
 
         # Return drawn
         self.infection_deck.return_drawn()
@@ -204,9 +204,9 @@ class Controller:
             card = self.infection_deck.draw_card()
 
             if card is not None:
-                if card.city.id not in forbiden:
-                    self.outbreaks += self.board.infect(card.city.id)
-                    cities.append(self.board.locations[card.city.id])
+                if card.city.id_ not in forbiden:
+                    self.outbreaks += self.board.infect(card.city.id_)
+                    cities.append(self.board.locations[card.city.id_])
             else:
                 return cities
         return cities

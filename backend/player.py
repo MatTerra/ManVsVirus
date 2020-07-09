@@ -49,8 +49,8 @@ class Player:
     def serialize(self) -> dict:
         return {'id': self.id,
                 'role': Player.ROLES.get(self.role),
-                'location': self.location.id,
-                'possible_moves': [{'name': city.name, 'id': city.id} for city in self.possible_moves()],
+                'location': self.location.id_,
+                'possible_moves': [{'name': city.name, 'id': city.id_} for city in self.possible_moves()],
                 'cards': [card.serialize() for card in self.cards]}
 
 

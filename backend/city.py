@@ -1,51 +1,51 @@
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+from typing import List
+
 from backend.constants import CITIES_DATA, COLORS
 
 
-class City:
-    def __init__(self, id: int = None, name: str = None, country: str = None, population: float = None,
-                 color: int = None):
-        self.id = id
-        self.color = color
-        self.name = name
-        self.population = population
-        self.connections = list()
-        self.country = country
-        self.locked_infection = False
-        self.infections = [0] * 4
-        self.research_center = False
+def create_infections():
+    return [0]*4
 
-    def __eq__(self, other):
-        if type(other) != City:
-            return False
-        self_dict = self.__dict__.copy()
-        self_dict.pop('connections')
-        self_dict.pop('infections')
-        self_dict.pop('population')
-        other_dict = other.__dict__.copy()
-        other_dict.pop('connections')
-        other_dict.pop('infections')
-        other_dict.pop('population')
-        return self_dict == other_dict
+
+@dataclass
+class City:
+    id_: int = None
+    name: str = None
+    country: str = None
+    population: float = field(default=None, compare=False)
+    color: int = None
+    connections: List[City] = field(default_factory=list,
+                                    init=False, compare=False)
+    locked_infection: bool = field(default=False, init=False, compare=False)
+    infections: List[int] = field(default_factory=create_infections,
+                                        init=False, compare=False)
+    research_center: bool = field(default=False, init=False, compare=False)
 
     def infect(self, amount: int = 1, color: int = None) -> int:
+        if amount > 3:
+            raise ValueError("Infection is limited to 3!")
         if color is None:
             color = self.color
         outbreak = 0
         if not self.locked_infection:
-            if self.infections[color] == 3:
+            if self.infections[color]+amount > 3:
                 print("outbreak in " + self.name)
                 outbreak += 1
+                self.infections[color] = 3
                 self.lock_infection()
-                for city in self.connections:
-                    outbreak += city.infect(color=color)
+                for connected_city in self.connections:
+                    outbreak += connected_city.infect(color=color)
             else:
                 self.infections[color] += amount
         return outbreak
 
-    def heal(self, all: bool = False, color: int = None) -> None:
+    def heal(self, all_infections: bool = False, color: int = None) -> None:
         if color is None:
             color = self.color
-        if all:
+        if all_infections:
             self.infections[color] = 0
         else:
             self.infections[color] -= 1
@@ -61,32 +61,41 @@ class City:
         self.connections.append(city)
 
     def serialize(self):
-        return {'id': self.id,
+        return {'id': self.id_,
                 'name': self.name,
                 'country': self.country,
                 'color': self.color,
-                'connections': {str(city.id): city.name for city in self.connections},
+                'connections': {str(connected_city.id_): connected_city.name
+                                for connected_city in self.connections},
                 'population': self.population,
                 'infections': self.infections}
 
-
-def deserialize(data: dict) -> City:
-    if data is None:
-        return None
-    deserialized_city = City()
-    deserialized_city.id = data.get('id')
-    deserialized_city.color = data.get('color')
-    deserialized_city.name = data.get('name')
-    deserialized_city.population = data.get('population')
-    deserialized_city.country = data.get('country')
-    deserialized_city.infections = data.get('infections') if data.get('infections') is not None else [0]*4
-    return deserialized_city
+    @classmethod
+    def deserialize(cls, data: dict) -> City:
+        if data is None:
+            return None
+        if not {'id', 'name', 'color',
+                'country', 'population'}.issubset(data.keys()):
+            raise AssertionError("'id', 'name', 'color',"
+                                 " 'country' and 'population' are required!")
+        deserialized_city = City(id_=data.get('id'),
+                                 color=data.get('color'),
+                                 name=data.get('name'),
+                                 population=data.get('population'),
+                                 country=data.get('country'))
+        deserialized_city.infections = (data.get('infections')
+                                        if data.get('infections') is not None
+                                        else [0]*4)
+        return deserialized_city
 
 
 CITIES = list()
 
 for i in range(48):
-    city = City(i, CITIES_DATA[i][0], CITIES_DATA[i][1], CITIES_DATA[i][2], CITIES_DATA[i][3])
+    city = City(i, CITIES_DATA[i][0],
+                CITIES_DATA[i][1],
+                CITIES_DATA[i][2],
+                CITIES_DATA[i][3])
     CITIES.append(city)
 
 for i in range(48):

@@ -1,19 +1,16 @@
+from __future__ import annotations
+
+from dataclasses import dataclass, field
 from random import shuffle
-from typing import Optional
+from typing import Optional, List
 
 from backend.card import Card
-from backend import card
 
 
+@dataclass
 class Deck:
-    def __init__(self):
-        self.cards = list()
-        self.drawn = list()
-
-    def __eq__(self, other):
-        if type(other) != type(self):
-            return False
-        return self.cards == other.cards and self.drawn == other.drawn
+    cards: List = field(default_factory=list)
+    drawn: List = field(default_factory=list)
 
     def shuffle(self):
         shuffle(self.cards)
@@ -30,9 +27,11 @@ class Deck:
         return {'drawn': [_card.serialize() for _card in self.drawn],
                 'cards': [_card.serialize() for _card in self.cards]}
 
-
-def deserialize(data: dict) -> Deck:
-    deck = Deck()
-    deck.drawn = [card.deserialize(serialized_card) for serialized_card in data.get('drawn')]
-    deck.cards = [card.deserialize(serialized_card) for serialized_card in data.get('cards')]
-    return deck
+    @classmethod
+    def deserialize(cls, data: dict) -> Deck:
+        deck = Deck()
+        deck.drawn = [Card.deserialize(serialized_card) for serialized_card in
+                      data.get('drawn')]
+        deck.cards = [Card.deserialize(serialized_card) for serialized_card in
+                      data.get('cards')]
+        return deck
