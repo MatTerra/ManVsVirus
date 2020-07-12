@@ -31,7 +31,7 @@ function Board() {
 
   const [infections, setInfections] = useState(Array(48).fill(Array(4).fill(0)))
   const [players, setPlayers] = useState(Array.from(new Array(48), () => []))
-  const [role, setRole] = useState()
+  const [role, setRole] = useState('...')
 
   const [turn, setTurn] = useState(false)
   const [played, setPlayed] = useState(0)

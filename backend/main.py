@@ -298,7 +298,7 @@ def read_game(token_info: dict):
     game_dict = doc_ref.to_dict()
     game_dict.pop('password')
     game_dict.pop('infection_deck')
-    game_dict['player_deck'] = len(game_dict.get('player_deck'))
+    game_dict['player_deck'] = len(game_dict.get('player_deck').get('cards'))
     return game_dict
 
 
