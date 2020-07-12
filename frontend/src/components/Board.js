@@ -47,6 +47,7 @@ function Board() {
   const [lost, setLost] = useState(false)
   const [confirmedLost, setConfirmedLost] = useState(false)
   const [discard, setDiscard] = useState(0)
+  const [numCards, setNumCards] = useState(0)
 
   function update(){
     backend.get("/game", { headers: { Authorization: `Bearer ${localStorage.getItem('loginToken')}` } }).then(response => {
@@ -62,6 +63,7 @@ function Board() {
       setInfectionsSum(response.data.infections_sum)
       setResearchCenters(response.data.research_centers)
       setDiscard(response.data.discard)
+      setNumCards(response.data.player_deck)
       let decode = jwtDecode(localStorage.getItem('loginToken'));
       setTurn(response.data.users[response.data.turn.player] == authContext.data.id || response.data.users[response.data.turn.player] == decode.primarysid)
       response.data.users.map((id, i) => {
@@ -169,6 +171,7 @@ function Board() {
           <label style={{ marginLeft: '0.5vw' }}>{infectionsSum[3]}/24</label>
           <img src={process.env.PUBLIC_URL + '/cube_red.png'} style={{ width: '1.5vw', margin: '1vh' }} />
           <label style={{ margin: '1vh' }}> <span style={{fontWeight: 'bold'}}>Id:</span> {gameId}</label>
+          <label style={{ margin: '1vh' }}> <span style={{fontWeight: 'bold'}}>Cartas:</span> {numCards}</label>
         </div>
       </div>
       <Actions selectedType={selectedType} setSelectedType={setSelectedType} curable={curable} discard={discard} build={canBuild} infected={healable} cards={cards} turn={turn} gameId={gameId} played={played} setPlayed={setPlayed} destinations={possibleMoves}/>

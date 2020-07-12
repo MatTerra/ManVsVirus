@@ -10,7 +10,7 @@ def create_infections():
     return [0]*4
 
 
-@dataclass
+@dataclass(unsafe_hash=True)
 class City:
     id_: int = None
     name: str = None
@@ -18,7 +18,7 @@ class City:
     population: float = field(default=None, compare=False)
     color: int = None
     connections: List[City] = field(default_factory=list,
-                                    init=False, compare=False)
+                                    init=False, compare=False, repr=False)
     locked_infection: bool = field(default=False, init=False, compare=False)
     infections: List[int] = field(default_factory=create_infections,
                                         init=False, compare=False)
@@ -69,6 +69,9 @@ class City:
                                 for connected_city in self.connections},
                 'population': self.population,
                 'infections': self.infections}
+
+    def __lt__(self, other):
+        return self.id_ < other.id_
 
     @classmethod
     def deserialize(cls, data: dict) -> City:

@@ -19,9 +19,12 @@ from backend import board
 
 
 class Controller:
-    def __init__(self, num_players: int = 2, difficulty: int = 0, board: Board=None, cures: list=[False]*4,
-                 lost: bool=False, infection_deck: InfectionDeck=None, infection_sum: list=[0]*4, player_deck: PlayerDeck=None,
-                 outbreaks: int=0, players: list=[], turn_of: int=None, remaining_actions: int=4, discard: int=0):
+    def __init__(self, num_players: int = 2, difficulty: int = 0,
+                 board: Board = None, cures: list = [False] * 4,
+                 lost: bool = False, infection_deck: InfectionDeck = None,
+                 infection_sum: list = [0] * 4, player_deck: PlayerDeck = None,
+                 outbreaks: int = 0, players: list = [], turn_of: int = None,
+                 remaining_actions: int = 4, discard: int = 0):
         self.board = board
         self.cures = cures
         self.lost = lost
@@ -36,12 +39,11 @@ class Controller:
         self.num_players = num_players
         self.discard = discard
 
-
     def start_game(self):
         self.board = Board()
         self.board.initialize_board()
 
-        self.cures = [False]*4
+        self.cures = [False] * 4
 
         self.lost = False
 
@@ -68,10 +70,10 @@ class Controller:
 
         shuffle(roles)
         self.players = list()
-        for i in range(self.num_players):
+        for j in range(self.num_players):
             role = roles.pop()
-            player = Player(i, role, self.board)
-            for i in range(2):
+            player = Player(j, role, self.board)
+            for j in range(2):
                 player.add_card(self.player_deck.draw_card())
             self.players.append(player)
 
@@ -83,7 +85,7 @@ class Controller:
         for player in self.players:
             for card in player.cards:
                 if card.city.population > max_pop:
-                    self.turn_of = player.id
+                    self.turn_of = player.id_
                     max_pop = card.city.population
 
     def play_action(self, action: dict):
@@ -93,9 +95,11 @@ class Controller:
         if action.get('type') == 'move':
             self.move_player(int(action['data']), player)
         elif action.get('type') == 'heal':
-            player.location.heal(player.role == 1 or self.cures[int(action.get('data'))],
-                                 int(action.get('data')) if action.get('data') != '' else None )
-            infections = [location.infections for location in self.board.locations]
+            player.location.heal(
+                player.role == 1 or self.cures[int(action.get('data'))],
+                int(action.get('data')) if action.get('data') != '' else None)
+            infections = [location.infections for location in
+                          self.board.locations]
             infections_zip = list(zip(*infections))
             self.infection_sum = list(map(sum, infections_zip))
         elif action.get('type') == 'travel':
@@ -110,39 +114,44 @@ class Controller:
             self.discard_action(int(action['data']), player)
             return self.end_round(action.get('type') == 'discard')
 
-
         self.remaining_actions -= 1
         if self.remaining_actions == 0:
             self.end_round()
 
     def build(self, player):
-        if player.location.name not in [card.city.name for card in player.cards if card.city is not None] \
+        if player.location.name not in [card.city.name for card in player.cards
+                                        if card.city is not None] \
                 and player.role != 4:
             raise ValueError("City card not available")
         if player.role != 4:
             action_cards = [card for card in player.cards if card.city is None]
-            location_cards = [card for card in player.cards if card.city is not None]
-            player.cards = [card for card in location_cards if card.city.id != player.location.id] + action_cards
+            location_cards = [card for card in player.cards if
+                              card.city is not None]
+            player.cards = [card for card in location_cards if
+                            card.city.id != player.location.id] + action_cards
         self.board.add_research_center(player.location.id)
 
     def cure(self, color, player):
-        amount_to_cure= 5 if player.role != 5 else 4
-        location_cards = [card for card in player.cards if card.city is not None]
+        amount_to_cure = 5 if player.role != 5 else 4
+        location_cards = [card for card in player.cards if
+                          card.city is not None]
         action_cards = [card for card in player.cards if card.city is None]
-        cards_to_cure = [card for card in location_cards if card.city.color == color]
+        cards_to_cure = [card for card in location_cards if
+                         card.city.color == color]
         if len(cards_to_cure) < amount_to_cure:
             raise ValueError("Not enough cards to cure")
         while len(cards_to_cure) > amount_to_cure:
             cards_to_cure.pop(0)
-        location_cards = [card for card in location_cards if card not in cards_to_cure]
-        player.cards = location_cards+action_cards
+        location_cards = [card for card in location_cards if
+                          card not in cards_to_cure]
+        player.cards = location_cards + action_cards
         self.cures[color] = True
 
     def discard_action(self, card_id, player):
         player.cards = [card for card in player.cards if card.id != card_id]
         self.discard -= 1
 
-    def end_round(self, skip_player: bool=False):
+    def end_round(self, skip_player: bool = False):
         if not skip_player:
             if not self.player_card_stage(self.turn_of):
                 self.lost = True
@@ -196,9 +205,12 @@ class Controller:
         self.infection_deck.return_drawn()
 
     def infection_stage(self):
-        forbiden =  list()
-        connections = [player.location.connections for player in self.players if player.role == 2]
-        forbiden = [city.id for city in connections] + [player.location for player in self.players if player.role == 2]
+        forbiden = list()
+        connections = [player.location.connections for player in self.players
+                       if player.role == 2]
+        forbiden = [city.id for city in connections] + [player.location for
+                                                        player in self.players
+                                                        if player.role == 2]
         cities = list()
         for i in range(self.board.infection_speeds[self.board.current_speed]):
             card = self.infection_deck.draw_card()
@@ -217,9 +229,11 @@ class Controller:
         player.move(self.board.locations[destination])
 
     def travel_player(self, destination, player):
-        if self.board.locations[destination].name not in [city.name for city in player.possible_travel_to()]:
+        if self.board.locations[destination].name not in [city.name for city in
+                                                          player.possible_travel_to()]:
             raise ValueError("City not available to travel")
-        player.cards = [card for card in player.cards if card.city.id != destination]
+        player.cards = [card for card in player.cards if
+                        card.city.id != destination]
         player.move(self.board.locations[destination])
 
     def serialize(self):
@@ -228,7 +242,8 @@ class Controller:
             'players': [player.serialize() for player in self.players],
             'outbreaks': self.outbreaks,
             'cures': {COLORS[i]: self.cures[i] for i in range(4)},
-            'turn': {'player': self.turn_of, 'remaining_actions': self.remaining_actions},
+            'turn': {'player': self.turn_of,
+                     'remaining_actions': self.remaining_actions},
             'infections_sum': self.infection_sum,
             'infection_deck': self.infection_deck.serialize(),
             'player_deck': self.player_deck.serialize(),
@@ -242,17 +257,24 @@ def deserialize(data: dict) -> Controller:
     deserialized_board = board.deserialize(data)
     deserialized_players = list()
     for serialized_player in data['players']:
-        deserialized_players.append(player.deserialize(serialized_player, deserialized_board))
+        deserialized_players.append(
+            player.deserialize(serialized_player, deserialized_board))
     deserialized_infection_deck = deck.deserialize(data.get('infection_deck'))
     deserialized_infection_deck.__class__ = InfectionDeck
     deserialized_player_deck = deck.deserialize(data.get('player_deck'))
     deserialized_player_deck.__class__ = PlayerDeck
-    game = Controller(num_players=len(deserialized_players), board=deserialized_board,
-                      cures=[data.get('cures')[color] for color in COLORS], lost=data.get('lost'),
-                    infection_deck=deserialized_infection_deck,
-                    infection_sum=data.get('infections_sum'), player_deck=deserialized_player_deck,
-                 outbreaks=data.get('outbreaks'), players=deserialized_players, turn_of=data.get('turn').get('player'),
-                      remaining_actions=data.get('turn').get('remaining_actions'), discard=data.get('discard'))
+    game = Controller(num_players=len(deserialized_players),
+                      board=deserialized_board,
+                      cures=[data.get('cures')[color] for color in COLORS],
+                      lost=data.get('lost'),
+                      infection_deck=deserialized_infection_deck,
+                      infection_sum=data.get('infections_sum'),
+                      player_deck=deserialized_player_deck,
+                      outbreaks=data.get('outbreaks'),
+                      players=deserialized_players,
+                      turn_of=data.get('turn').get('player'),
+                      remaining_actions=data.get('turn').get(
+                          'remaining_actions'), discard=data.get('discard'))
     return game
 
 
@@ -276,7 +298,7 @@ def read_game(token_info: dict):
     game_dict = doc_ref.to_dict()
     game_dict.pop('password')
     game_dict.pop('infection_deck')
-    game_dict.pop('player_deck')
+    game_dict['player_deck'] = len(game_dict.get('player_deck'))
     return game_dict
 
 
@@ -306,7 +328,8 @@ def create_game(game_data: dict, token_info: dict):
     users = [None for n in range(1, num_players)]
     users[0] = user_id
     game_serialized.update({'users': users,
-                            'password': str(hashlib.sha256(password).hexdigest()),
+                            'password': str(
+                                hashlib.sha256(password).hexdigest()),
                             'num_players': num_players,
                             'game_id': game_id})
     doc_ref.set(game_serialized)
@@ -317,7 +340,7 @@ def create_game(game_data: dict, token_info: dict):
     return game_id
 
 
-def do_action(game_id: str, action: dict, token_info: dict=None):
+def do_action(game_id: str, action: dict, token_info: dict = None):
     try:
         user_id = token_info.get('primarysid')
     except:
@@ -329,12 +352,12 @@ def do_action(game_id: str, action: dict, token_info: dict=None):
     game_dict = db.collection('games').document(game_id).get().to_dict()
     print(game_dict)
 
-
     game = deserialize(game_dict)
 
     if game_dict['users'][game.turn_of] != user_id:
         return abort(401, "Not your turn")
-    # {'type':'move', 'data': {'destination': game.players[game.turn_of].possible_moves()[0].id}}
+    # {'type':'move', 'data': {'destination': game.players[
+    # game.turn_of].possible_moves()[0].id}}
     try:
         game.play_action(action)
     except ValueError as e:
@@ -354,7 +377,7 @@ def join_game(game_id: str, data: dict, token_info: dict):
         user_id = token_info.get('primarysid')
         password = data['password'].encode('utf-8')
     except:
-        return abort(404, "Missing parameters")
+        return abort(400, "Missing parameters")
 
     db = firestore.client()
     doc_ref_2 = db.collection('users_games').document(user_id).get()
@@ -437,4 +460,3 @@ if __name__ == '__main__':
         print("round " + str(i))
 
     print(json.dumps(game.serialize()))
-
